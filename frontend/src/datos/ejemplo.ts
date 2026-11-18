@@ -29,7 +29,8 @@ import s42 from '../assets/ejemplo/salida_s42.jpg'
 import s7 from '../assets/ejemplo/salida_s7.jpg'
 import variacion from '../assets/ejemplo/variacion.jpg'
 
-export const ES_EJEMPLO = true
+/** Con `?demo=1` en la URL la app usa estos datos y no necesita el backend. */
+export const ES_EJEMPLO = typeof window !== 'undefined' && new URLSearchParams(window.location.search).has('demo')
 
 export type SubTareaId = 'A' | 'B' | 'C'
 
@@ -81,8 +82,8 @@ export const SUB_TAREAS: Record<SubTareaId, SubTarea> = {
       { clave: 'guidance', etiqueta: 'Guidance', valor: 7.5, min: 0, max: 15, paso: 0.5 },
     ],
     prompt: 'a high quality photo',
-    real: ['Composición y encuadre', 'Pose y forma del gato', 'Colores dominantes'],
-    inventado: ['Textura del pelaje', 'Bigotes individuales', 'Reflejos en los ojos'],
+    real: ['Composición y encuadre', 'Formas y contornos grandes', 'Colores dominantes'],
+    inventado: ['Textura fina', 'Bordes nítidos y detalles chicos', 'Letras, números y patrones pequeños'],
   },
   B: {
     id: 'B',
