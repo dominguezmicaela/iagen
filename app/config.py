@@ -20,3 +20,14 @@ MODELO_BLIP = "Salesforce/blip-image-captioning-large"
 MODELO_DETR = "facebook/detr-resnet-50"
 DETR = os.getenv("RESTAURA_DETR", "1" if DISPOSITIVO == "cuda" else "0") == "1"
 UMBRAL_DETR = 0.7
+
+PRECARGAR = os.getenv("RESTAURA_PRECARGAR") == "1"
+SEMILLA = 42
+SEMILLAS_EXTRA = [
+    int(s)
+    for s in os.getenv("RESTAURA_SEMILLAS_EXTRA", "7,19,33" if DISPOSITIVO == "cuda" else "").split(",")
+    if s
+]
+MAX_BYTES = 10 * 1024 * 1024
+MAX_TRABAJOS = 10
+ORIGENES_DEV = ["http://localhost:5173"]
