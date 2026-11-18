@@ -1,7 +1,9 @@
 import { Download } from 'lucide-react'
 import { useEffect, useState } from 'react'
-import { MAPAS, MARCAS, PORCENTAJES, SEMILLAS, SUB_TAREAS } from '../datos/ejemplo'
-import { useEstado, type ModoMapa } from '../estado'
+import { descargar, urlInforme } from '../api'
+import { SUB_TAREAS } from '../datos/ejemplo'
+import { useDatos, useEstado, type ModoMapa } from '../estado'
+import { SinResultado } from '../components/SinResultado'
 import { useAvisar } from '../components/avisos'
 import { LamparaUV } from '../components/LamparaUV'
 import { NumeroAnimado, Segmentado } from '../components/movimiento'
@@ -9,9 +11,9 @@ import { Actual, Boton, Diseno, Interruptor, Rango, Seccion, Tecla, cx, escribie
 
 const enFrase = (xs: string[]) => xs.map((x, i) => (i ? x[0].toLowerCase() + x.slice(1) : x)).join(', ') + '.'
 
-const MODOS: { id: ModoMapa; nombre: string; ayuda: string }[] = [
+const modos = (semillas: number): { id: ModoMapa; nombre: string; ayuda: string }[] => [
   { id: 'diferencia', nombre: 'Contra tu foto', ayuda: 'Se ilumina lo que cambió respecto de tu foto agrandada de forma clásica.' },
-  { id: 'variacion', nombre: 'Entre semillas', ayuda: 'Se ilumina lo que cambia entre 4 semillas: no sale de tu foto, lo eligió el modelo.' },
+  { id: 'variacion', nombre: 'Entre semillas', ayuda: `Se ilumina lo que cambia entre ${semillas} semillas: no sale de tu foto, lo eligió el modelo.` },
 ]
 
 export function Analizar() {
@@ -24,11 +26,7 @@ export function Analizar() {
   const [verMarcas, setVerMarcas] = useState(true)
   const [marcaActiva, setMarcaActiva] = useState<number | null>(null)
 
-  const salida = SEMILLAS.find((s) => s.valor === semilla)?.imagen ?? SEMILLAS[0].imagen
-  const mapa = modoMapa === 'diferencia' ? t.diferencias : MAPAS.variacion
-  const serie = PORCENTAJES[modoMapa === 'diferencia' ? subTarea : 'variacion']
-  const pct = serie[Math.round(umbral / 5) - 1] ?? 0
-  const modo = MODOS.find((m) => m.id === modoMapa)!
+  const d = useDatos()
 
   // Atajos: U = todo bajo UV · Z = zonas
   useEffect(() => {
@@ -42,11 +40,19 @@ export function Analizar() {
     return () => window.removeEventListener('keydown', abajo)
   }, [])
 
+  if (!d) return <SinResultado />
+  const salida = d.semillas.find((s) => s.valor === semilla)?.imagen ?? d.semillas[0].imagen
+  const MODOS = modos(d.semillas.length).filter((m) => m.id === 'diferencia' || d.variacion)
+  const modo = MODOS.find((m) => m.id === modoMapa) ?? MODOS[0]
+  const mapa = modo.id === 'variacion' && d.variacion ? d.variacion : d.diferencias
+  const serie = (modo.id === 'variacion' ? d.porcentajes.variacion : null) ?? d.porcentajes.diferencia
+  const pct = serie[Math.round(umbral / 5) - 1] ?? 0
+
   const principal = (
     <div className="flex min-h-full flex-col gap-5 p-6">
       <header className="flex flex-wrap items-end justify-between gap-3">
         <h1 className="titular text-[clamp(30px,3vw,44px)]">Lámpara UV</h1>
-        <Segmentado etiqueta="Comparar" opciones={MODOS.map((m) => ({ id: m.id, nombre: m.nombre }))} valor={modoMapa} onChange={setModoMapa} />
+        <Segmentado etiqueta="Comparar" opciones={MODOS.map((m) => ({ id: m.id, nombre: m.nombre }))} valor={modo.id} onChange={setModoMapa} />
       </header>
 
       <div className="flex min-h-[240px] flex-1 items-center justify-center">
@@ -57,6 +63,7 @@ export function Analizar() {
           intensidad={intensidad / 100}
           completa={completa}
           marcas={verMarcas}
+          zonas={d.zonas}
           marcaActiva={marcaActiva}
           onMarca={setMarcaActiva}
           descripcion={`Bajo luz UV se iluminan las zonas que cambiaron más del ${umbral} %`}
@@ -65,7 +72,7 @@ export function Analizar() {
 
       <Seccion titulo="Zonas que se iluminan">
         <ol className="grid grid-cols-2 gap-3 sm:grid-cols-4">
-          {MARCAS.map((m, i) => (
+          {d.zonas.map((m, i) => (
             <li
               key={m.titulo}
               onMouseEnter={() => setMarcaActiva(i)}
@@ -143,7 +150,10 @@ export function Analizar() {
         </Interruptor>
       </div>
       <div className="hidden justify-end sm:flex">
-        <Boton variante="blanco" className="min-h-10 px-5 text-[14px]" onClick={() => avisar('Informe exportado con el mapa de lo inventado')}>
+        <Boton variante="blanco" className="min-h-10 px-5 text-[14px]" onClick={() => {
+            if (d.descarga) descargar(urlInforme(d.descarga.trabajo))
+            avisar('Informe exportado con el mapa de lo inventado')
+          }}>
           <Download size={17} /> Exportar informe
         </Boton>
       </div>

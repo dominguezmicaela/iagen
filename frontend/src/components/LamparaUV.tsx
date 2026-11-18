@@ -1,6 +1,6 @@
 import { Flashlight } from 'lucide-react'
 import { useId, useState, type CSSProperties } from 'react'
-import { MARCAS } from '../datos/ejemplo'
+import type { Zona } from '../api'
 import { RAMPAS, tonoActual } from './tonoIA'
 import { Capsula, cx } from './ui'
 
@@ -16,6 +16,7 @@ export function LamparaUV({
   intensidad,
   completa,
   marcas = true,
+  zonas = [],
   marcaActiva,
   onMarca,
   descripcion,
@@ -28,6 +29,7 @@ export function LamparaUV({
   /** true = toda la imagen bajo luz UV */
   completa: boolean
   marcas?: boolean
+  zonas?: Zona[]
   marcaActiva?: number | null
   onMarca?: (i: number | null) => void
   descripcion: string
@@ -118,7 +120,7 @@ export function LamparaUV({
       )}
 
       {marcas && !decorativa &&
-        MARCAS.map((m, i) => {
+        zonas.map((m, i) => {
           const activa = marcaActiva === i
           return (
             <button
