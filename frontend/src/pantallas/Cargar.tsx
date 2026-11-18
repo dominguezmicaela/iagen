@@ -1,11 +1,15 @@
-import { Focus, ImagePlus, Palette, Play, ShieldCheck, X, ZoomIn } from 'lucide-react'
+import { Focus, ImagePlus, LoaderCircle, Palette, Play, ShieldCheck, X, ZoomIn } from 'lucide-react'
 import { useState, type DragEvent, type ReactNode } from 'react'
-import { SEMILLAS, SUB_TAREAS, type SubTareaId } from '../datos/ejemplo'
+import { ES_EJEMPLO, SEMILLAS, SUB_TAREAS, type SubTareaId } from '../datos/ejemplo'
 import { useEstado } from '../estado'
+import { useAvisar } from '../components/avisos'
 import { LamparaUV } from '../components/LamparaUV'
 import { Actual, Boton, Capsula, Diseno, Enlace, Rango, Seccion, Tarjeta, cx } from '../components/ui'
 
 const IDS: SubTareaId[] = ['A', 'B', 'C']
+const MAX_BYTES = 10 * 1024 * 1024
+/** Sin backend para B y C: solo se pueden recorrer en el modo demo. */
+const disponible = (id: SubTareaId) => ES_EJEMPLO || id === 'A'
 const ICONO: Record<SubTareaId, ReactNode> = { A: <ZoomIn size={22} />, B: <Focus size={22} />, C: <Palette size={22} /> }
 
 const NIVELES = [
@@ -15,7 +19,8 @@ const NIVELES = [
 ]
 
 export function Cargar() {
-  const { subTarea, setSubTarea, entradaElegida, setEntradaElegida, archivoPropio, setArchivoPropio, ajustes, setAjuste } = useEstado()
+  const { subTarea, setSubTarea, entradaElegida, setEntradaElegida, archivoPropio, setArchivoPropio, ajustes, setAjuste, enviando, iniciar } = useEstado()
+  const avisar = useAvisar()
   const [encima, setEncima] = useState(false)
   const t = SUB_TAREAS[subTarea]
   const valor = (clave: string) => ajustes[subTarea]?.[clave] ?? t.parametros.find((p) => p.clave === clave)!.valor
@@ -24,9 +29,11 @@ export function Cargar() {
   const nivel = NIVELES.find((n) => libertad < n.hasta)!
 
   const usarArchivo = (f?: File) => {
-    if (!f || !f.type.startsWith('image/')) return
+    if (!f) return
+    if (!f.type.startsWith('image/')) return avisar('El archivo tiene que ser una imagen (JPG, PNG o WEBP).', 'error')
+    if (f.size > MAX_BYTES) return avisar('La imagen pesa más de 10 MB.', 'error')
     if (archivoPropio) URL.revokeObjectURL(archivoPropio.url)
-    setArchivoPropio({ url: URL.createObjectURL(f), nombre: f.name })
+    setArchivoPropio({ url: URL.createObjectURL(f), nombre: f.name, archivo: f })
     setEntradaElegida('propia')
   }
   const alSoltar = (e: DragEvent) => {
@@ -114,10 +121,15 @@ export function Cargar() {
               subtitulo={SUB_TAREAS[id].archivo}
               activa={entradaElegida === id}
               etiqueta={`Usar el ejemplo ${SUB_TAREAS[id].titulo}`}
-              onClick={() => {
-                setEntradaElegida(id)
-                setSubTarea(id)
-              }}
+              insignia={!disponible(id) && <Capsula>Próximamente</Capsula>}
+              onClick={
+                disponible(id)
+                  ? () => {
+                      setEntradaElegida(id)
+                      setSubTarea(id)
+                    }
+                  : undefined
+              }
             />
           ))}
         </div>
@@ -133,20 +145,21 @@ export function Cargar() {
           {IDS.map((id) => {
             const m = SUB_TAREAS[id]
             const activo = subTarea === id
+            const habilitado = disponible(id)
             return (
               <label
                 key={id}
                 className={cx(
-                  'flex cursor-pointer items-start gap-3 rounded-md p-2 transition-colors duration-200 has-[:focus-visible]:outline-2 has-[:focus-visible]:outline-white',
-                  activo ? 'bg-tarjeta-2' : 'hover:bg-tarjeta',
+                  'flex items-start gap-3 rounded-md p-2 transition-colors duration-200 has-[:focus-visible]:outline-2 has-[:focus-visible]:outline-white',
+                  activo ? 'bg-tarjeta-2' : habilitado ? 'cursor-pointer hover:bg-tarjeta' : 'cursor-not-allowed opacity-50',
                 )}
               >
-                <input type="radio" name="modo" value={id} checked={activo} onChange={() => setSubTarea(id)} className="sr-only" />
+                <input type="radio" name="modo" value={id} checked={activo} disabled={!habilitado} onChange={() => setSubTarea(id)} className="sr-only" />
                 <span className={cx('grid size-12 shrink-0 place-items-center rounded-md', activo ? 'fondo-ia text-black' : 'bg-elevado text-white')}>{ICONO[id]}</span>
                 <span className="min-w-0">
                   <span className={cx('block text-[15px] font-bold', activo && 'text-fluor')}>{m.titulo}</span>
                   <span className="block text-[13px] text-gris">{m.bajada}</span>
-                  <span className="mt-0.5 block text-[13px] text-fluor">Inventa {m.inventa}.</span>
+                  <span className="mt-0.5 block text-[13px] text-fluor">{habilitado ? `Inventa ${m.inventa}.` : 'Próximamente.'}</span>
                 </span>
               </label>
             )
@@ -176,10 +189,15 @@ export function Cargar() {
     <>
       <Actual imagen={vista?.src} titulo={vista ? vista.nombre : 'Ninguna imagen elegida'} subtitulo={t.titulo} />
       <div className="flex justify-center">
-        {vista ? (
+        {vista && ES_EJEMPLO ? (
           <Enlace href="#/restaurar" variante="marca" className="min-h-12 px-8">
             <Play size={18} fill="currentColor" /> Restaurar imagen
           </Enlace>
+        ) : vista ? (
+          <Boton variante="marca" disabled={enviando} className="min-h-12 px-8" onClick={() => iniciar().catch((e: Error) => avisar(e.message, 'error'))}>
+            {enviando ? <LoaderCircle size={18} className="animate-spin" /> : <Play size={18} fill="currentColor" />}
+            {enviando ? 'Enviando…' : 'Restaurar imagen'}
+          </Boton>
         ) : (
           <Boton variante="marca" disabled className="min-h-12 px-8">
             <Play size={18} fill="currentColor" /> Elegí una imagen
