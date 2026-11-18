@@ -1,0 +1,153 @@
+@import "tailwindcss";
+
+/* ------------------------------------------------------------------
+   Estilo: reproductor de música / streaming.
+   Negro profundo, superficies carbón, un solo color de marca (lavanda)
+   que además marca todo lo que inventó la IA.
+   ------------------------------------------------------------------ */
+@theme {
+  --color-negro: #000000;
+  --color-fondo: #121212;
+  --color-tarjeta: #181818;
+  --color-tarjeta-2: #242424;
+  --color-elevado: #2e2e2e;
+  --color-gris: #b3b3b3;
+  --color-gris-2: #8f8f8f;
+
+  /* Marca y "lo inventado" (lavanda por defecto; ver [data-ia]) */
+  --color-fluor: #b49cff;
+  --color-fluor-claro: #d9ccff;
+  --color-real: #ffffff;
+
+  --font-sans: "Figtree Variable", ui-sans-serif, system-ui, -apple-system, sans-serif;
+
+  --ease-suave: cubic-bezier(0.22, 1, 0.36, 1);
+
+  --animate-entrar: entrar 0.45s var(--ease-suave) both;
+  @keyframes entrar {
+    from { opacity: 0; transform: translateY(8px); }
+    to { opacity: 1; transform: none; }
+  }
+  --animate-barrido: barrido 1.8s var(--ease-suave) 0.4s both;
+  @keyframes barrido {
+    from { --haz: 96%; }
+    to { --haz: 32%; }
+  }
+}
+
+@property --haz {
+  syntax: "<percentage>";
+  inherits: true;
+  initial-value: 32%;
+}
+
+:root[data-ia="coral"] {
+  --color-fluor: #ff8a6b;
+  --color-fluor-claro: #ffc2b0;
+}
+:root[data-ia="ambar"] {
+  --color-fluor: #f5b544;
+  --color-fluor-claro: #ffd58a;
+}
+
+@layer base {
+  html,
+  body,
+  #root {
+    height: 100%;
+  }
+  body {
+    @apply bg-negro font-sans text-white antialiased;
+    font-size: 15px;
+    line-height: 1.5;
+    font-variant-numeric: tabular-nums;
+  }
+  ::selection {
+    background: var(--color-fluor);
+    color: black;
+  }
+  :focus-visible {
+    outline: 2px solid white;
+    outline-offset: 2px;
+  }
+  /* barras de scroll finas, como en las apps de streaming */
+  * {
+    scrollbar-width: thin;
+    scrollbar-color: rgb(255 255 255 / 0.2) transparent;
+  }
+}
+
+@utility fondo-ia {
+  background: var(--color-fluor);
+}
+
+@utility titular {
+  font-weight: 800;
+  letter-spacing: -0.03em;
+  line-height: 1.02;
+  font-variant-numeric: proportional-nums;
+}
+
+/* Slider: barra fina blanca que se vuelve lavanda al pasar el mouse */
+@utility rango {
+  appearance: none;
+  -webkit-appearance: none;
+  width: 100%;
+  height: 20px;
+  background: transparent;
+  cursor: pointer;
+  --pct: 50%;
+  --relleno: white;
+
+  &:hover,
+  &:focus-visible {
+    --relleno: var(--color-fluor);
+  }
+  &::-webkit-slider-runnable-track {
+    height: 4px;
+    border-radius: 999px;
+    background: linear-gradient(var(--relleno), var(--relleno)) 0 0 / var(--pct) 100% no-repeat, rgb(255 255 255 / 0.25);
+  }
+  &::-moz-range-track {
+    height: 4px;
+    border-radius: 999px;
+    background: rgb(255 255 255 / 0.25);
+  }
+  &::-moz-range-progress {
+    height: 4px;
+    border-radius: 999px;
+    background: var(--relleno);
+  }
+  &::-webkit-slider-thumb {
+    -webkit-appearance: none;
+    width: 14px;
+    height: 14px;
+    margin-top: -5px;
+    border-radius: 999px;
+    background: white;
+    box-shadow: 0 2px 6px rgb(0 0 0 / 0.5);
+  }
+  &::-moz-range-thumb {
+    width: 14px;
+    height: 14px;
+    border: 0;
+    border-radius: 999px;
+    background: white;
+  }
+  &:focus-visible {
+    outline: none;
+  }
+  &:focus-visible::-webkit-slider-thumb {
+    outline: 2px solid white;
+    outline-offset: 2px;
+  }
+}
+
+@media (prefers-reduced-motion: reduce) {
+  *,
+  *::before,
+  *::after {
+    transition: none !important;
+    animation: none !important;
+  }
+}
