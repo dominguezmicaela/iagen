@@ -37,6 +37,8 @@ class Trabajo:
     paso: int = 0
     total: int = 0
     segundos_por_paso: float | None = None
+    semilla_indice: int = 0
+    semillas_total: int = 1
     error: str | None = None
     resultado: dict | None = None
     imagenes: dict[str, bytes] = field(default_factory=dict)
@@ -57,6 +59,8 @@ class Trabajo:
             "paso": self.paso,
             "total": self.total,
             "segundos_por_paso": self.segundos_por_paso,
+            "semilla_indice": self.semilla_indice,
+            "semillas_total": self.semillas_total,
             "fotogramas": self.fotogramas,
             "error": self.error,
             "resultado": self.resultado,
@@ -115,10 +119,11 @@ class GestorTrabajos:
         try:
             p = trabajo.parametros
             semillas = [p["seed"], *(s for s in p["semillas_extra"] if s != p["seed"])]
-            trabajo.estado = "restaurando"
+            trabajo.estado, trabajo.semillas_total = "restaurando", len(semillas)
             inicio = time.perf_counter()
             salidas = []
             for i, semilla in enumerate(semillas):
+                trabajo.semilla_indice = i
                 etapa = (
                     "Inventa el detalle fino"
                     if i == 0

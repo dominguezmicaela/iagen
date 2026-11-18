@@ -51,7 +51,7 @@ def test_flujo_completo(cliente):
     assert trabajo["estado"] == "listo", trabajo["error"]
     r = trabajo["resultado"]
     assert r["medidas_entrada"] == "40 × 32 px" and r["medidas_salida"] == "160 × 128 px"
-    assert [s["valor"] for s in r["semillas"]] == [42, 7]
+    assert [s["valor"] for s in r["semillas"]] == [42, 7] and trabajo["semillas_total"] == 2
     assert len(r["porcentajes"]["diferencia"]) == 19 and len(r["porcentajes"]["variacion"]) == 19
     assert len(r["fotogramas"]) == 5 and r["verificacion"]["simulado"]
     for url in [
