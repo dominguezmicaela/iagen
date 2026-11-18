@@ -1,6 +1,6 @@
 import { Columns2, FlaskConical, Flashlight, Plus, Upload, Wand } from 'lucide-react'
 import type { ReactNode } from 'react'
-import { SUB_TAREAS, type SubTareaId } from '../datos/ejemplo'
+import { ES_EJEMPLO, SUB_TAREAS, type SubTareaId } from '../datos/ejemplo'
 import { PANTALLAS, useEstado, type PantallaId } from '../estado'
 import { cx } from './ui'
 
@@ -23,8 +23,28 @@ export function Logo() {
 }
 
 export function BarraLateral() {
-  const { pantalla, subTarea, setSubTarea, setEntradaElegida } = useEstado()
+  const { pantalla, subTarea, setSubTarea, setEntradaElegida, historial, trabajo, abrir } = useEstado()
   const ids: SubTareaId[] = ['A', 'B', 'C']
+  const items = ES_EJEMPLO
+    ? ids.map((id) => ({
+        clave: id,
+        miniatura: SUB_TAREAS[id].entrada,
+        archivo: SUB_TAREAS[id].archivo,
+        detalle: SUB_TAREAS[id].titulo,
+        activa: id === subTarea && pantalla !== 'subir',
+        elegir: () => {
+          setSubTarea(id)
+          setEntradaElegida(id)
+        },
+      }))
+    : historial.map((h) => ({
+        clave: h.id,
+        miniatura: h.miniatura,
+        archivo: h.archivo,
+        detalle: SUB_TAREAS.A.titulo,
+        activa: h.id === trabajo?.id && pantalla !== 'subir',
+        elegir: () => abrir(h.id),
+      }))
 
   return (
     <div className="hidden min-h-0 flex-col gap-2 lg:col-start-1 lg:row-start-1 lg:flex">
@@ -59,34 +79,32 @@ export function BarraLateral() {
           </a>
         </div>
         <ul className="min-h-0 flex-1 overflow-y-auto px-2">
-          {ids.map((id) => {
-            const t = SUB_TAREAS[id]
-            const activa = id === subTarea && pantalla !== 'subir'
-            return (
-              <li key={id}>
-                <button
-                  type="button"
-                  onClick={() => {
-                    setSubTarea(id)
-                    setEntradaElegida(id)
-                    window.location.hash = '/revisar'
-                  }}
-                  className={cx('flex w-full items-center gap-3 rounded-md p-2 text-left transition-colors duration-200', activa ? 'bg-tarjeta-2' : 'hover:bg-tarjeta')}
-                >
-                  <img src={t.entrada} alt="" className="size-12 shrink-0 rounded object-cover" />
-                  <span className="min-w-0">
-                    <span className={cx('block truncate text-[15px] font-semibold', activa && 'text-fluor')}>{t.archivo}</span>
-                    <span className="block truncate text-[13px] text-gris">{t.titulo}</span>
-                  </span>
-                </button>
-              </li>
-            )
-          })}
+          {items.map(({ clave, miniatura, archivo, detalle, activa, elegir }) => (
+            <li key={clave}>
+              <button
+                type="button"
+                onClick={() => {
+                  elegir()
+                  window.location.hash = '/revisar'
+                }}
+                className={cx('flex w-full items-center gap-3 rounded-md p-2 text-left transition-colors duration-200', activa ? 'bg-tarjeta-2' : 'hover:bg-tarjeta')}
+              >
+                <img src={miniatura} alt="" className="size-12 shrink-0 rounded object-cover" />
+                <span className="min-w-0">
+                  <span className={cx('block truncate text-[15px] font-semibold', activa && 'text-fluor')}>{archivo}</span>
+                  <span className="block truncate text-[13px] text-gris">{detalle}</span>
+                </span>
+              </button>
+            </li>
+          ))}
+          {!items.length && <li className="px-3 py-2 text-[13px] text-gris">Todavía no restauraste ninguna imagen.</li>}
         </ul>
-        <p className="m-3 flex gap-2.5 rounded-md bg-tarjeta-2 p-3 text-[12.5px] leading-snug text-gris">
-          <FlaskConical size={16} className="mt-0.5 shrink-0" />
-          Datos de ejemplo: nada de esto lo generó un modelo real.
-        </p>
+        {ES_EJEMPLO && (
+          <p className="m-3 flex gap-2.5 rounded-md bg-tarjeta-2 p-3 text-[12.5px] leading-snug text-gris">
+            <FlaskConical size={16} className="mt-0.5 shrink-0" />
+            Datos de ejemplo: nada de esto lo generó un modelo real.
+          </p>
+        )}
       </section>
     </div>
   )
