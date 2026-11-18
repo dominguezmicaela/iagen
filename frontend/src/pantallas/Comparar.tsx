@@ -1,12 +1,15 @@
 import { Check, ChevronDown, Download, Eye, FileText, Flashlight, Search, Sparkles, TriangleAlert } from 'lucide-react'
 import { useEffect, useState, type ReactNode } from 'react'
-import { SEMILLAS, SUB_TAREAS, VERIFICACION, type Estado } from '../datos/ejemplo'
-import { useEstado } from '../estado'
+import { descargar, urlDescarga, urlInforme } from '../api'
+import { SUB_TAREAS, type Estado } from '../datos/ejemplo'
+import { useDatos, useEstado } from '../estado'
 import { useAvisar } from '../components/avisos'
 import { Comparador } from '../components/Comparador'
 import { Actual, Boton, BotonIcono, Diseno, Seccion, Tarjeta, Tecla, cx, escribiendo } from '../components/ui'
+import { SinResultado } from '../components/SinResultado'
 
 const n2 = (v: number) => v.toFixed(2).replace('.', ',')
+const estado = (ok: boolean): Estado => (ok ? 'ok' : 'alerta')
 
 function Chequeo({ titulo, modelo, estado, resumen, abierto, children }: { titulo: string; modelo: string; estado: Estado; resumen: string; abierto?: boolean; children?: ReactNode }) {
   return (
@@ -35,9 +38,8 @@ function Chequeo({ titulo, modelo, estado, resumen, abierto, children }: { titul
 export function Comparar() {
   const { subTarea, semilla, setSemilla, setModoMapa } = useEstado()
   const avisar = useAvisar()
+  const d = useDatos()
   const t = SUB_TAREAS[subTarea]
-  const v = VERIFICACION[subTarea]
-  const salida = SEMILLAS.find((s) => s.valor === semilla)?.imagen ?? SEMILLAS[0].imagen
   const [lupa, setLupa] = useState(true)
   const [original, setOriginal] = useState(false)
 
@@ -62,23 +64,28 @@ export function Comparar() {
     }
   }, [])
 
+  if (!d) return <SinResultado />
+  const v = d.verificacion
+  const salida = d.semillas.find((s) => s.valor === semilla)?.imagen ?? d.semillas[0].imagen
+  const chequeos = [v.descripcionOk, v.clipOk, v.detrOk].filter((x) => x !== null)
+
   const principal = (
     <div className="flex min-h-full flex-col gap-5 p-6">
       <div role="note" className="flex items-start gap-3 rounded-md bg-fluor/[0.12] p-3.5 ring-1 ring-fluor/30">
         <Sparkles size={20} className="mt-0.5 shrink-0 text-fluor" />
         <p className="text-[14px] leading-snug text-gris">
           <strong className="text-white">Tiene detalle inventado. </strong>
-          {t.aviso}
+          {d.aviso}
         </p>
       </div>
 
       <div className="flex min-h-[240px] flex-1 items-center justify-center">
-        <Comparador entrada={t.entrada} salida={salida} semilla={semilla} lupa={lupa} original={original} />
+        <Comparador entrada={d.entrada} salida={salida} semilla={semilla} lupa={lupa} original={original} />
       </div>
 
       <Seccion titulo="Otras semillas" accion="El detalle fino cambia con cada una">
         <div className="grid grid-cols-2 gap-3 sm:grid-cols-4">
-          {SEMILLAS.map((s) => (
+          {d.semillas.map((s) => (
             <Tarjeta
               key={s.valor}
               imagen={s.imagen}
@@ -96,9 +103,9 @@ export function Comparar() {
 
   const panel = (
     <div className="flex flex-col gap-4 p-5">
-      <Seccion titulo="Chequeo" accion="2 de 3 bien">
+      <Seccion titulo="Chequeo" accion={`${chequeos.filter(Boolean).length} de ${chequeos.length} bien`}>
         <div className="flex flex-col gap-2">
-          <Chequeo titulo="Cómo la describe" modelo="BLIP, Salesforce/blip-image-captioning-large" estado="alerta" resumen={v.descripcionResumen} abierto>
+          <Chequeo titulo="Cómo la describe" modelo="BLIP, Salesforce/blip-image-captioning-large" estado={estado(v.descripcionOk)} resumen={v.descripcionResumen} abierto={!v.descripcionOk}>
             <p className="text-[14px] text-gris">
               <span className="text-gris-2">Antes </span>“{v.descripcionEntrada}”
             </p>
@@ -117,7 +124,7 @@ export function Comparar() {
             </p>
           </Chequeo>
 
-          <Chequeo titulo="Qué hay en la foto" modelo="CLIP, openai/clip-vit-base-patch32" estado="ok" resumen={v.clipResumen}>
+          <Chequeo titulo="Qué hay en la foto" modelo="CLIP, openai/clip-vit-base-patch32" estado={estado(v.clipOk)} resumen={v.clipResumen} abierto={!v.clipOk}>
             {v.clip.map((c) => (
               <p key={c.etiqueta} className="flex justify-between gap-3 text-[13.5px]">
                 <span className="truncate text-gris">{c.etiqueta}</span>
@@ -129,7 +136,8 @@ export function Comparar() {
             ))}
           </Chequeo>
 
-          <Chequeo titulo="Qué objetos detecta" modelo="DETR, facebook/detr-resnet-50" estado="ok" resumen={v.detrResumen}>
+          {v.detrOk !== null && (
+          <Chequeo titulo="Qué objetos detecta" modelo="DETR, facebook/detr-resnet-50" estado={estado(v.detrOk)} resumen={v.detrResumen} abierto={!v.detrOk}>
             {v.detr.map((d) => (
               <p key={d.objeto} className="flex justify-between text-[13.5px]">
                 <span className="text-gris">{d.objeto}</span>
@@ -140,6 +148,7 @@ export function Comparar() {
               </p>
             ))}
           </Chequeo>
+          )}
         </div>
       </Seccion>
 
@@ -194,10 +203,19 @@ export function Comparar() {
         </BotonIcono>
       </div>
       <div className="hidden items-center justify-end gap-2 sm:flex">
-        <BotonIcono etiqueta="Descargar informe" onClick={() => avisar('Informe descargado: modelo, parámetros, semilla y chequeos')}>
+        <BotonIcono
+          etiqueta="Descargar informe"
+          onClick={() => {
+            if (d.descarga) descargar(urlInforme(d.descarga.trabajo))
+            avisar('Informe descargado: modelo, parámetros, semilla y chequeos')
+          }}
+        >
           <FileText size={20} />
         </BotonIcono>
-        <Boton variante="blanco" className="min-h-10 px-5 text-[14px]" onClick={() => avisar('Imagen descargada con la marca «Restaurada con IA»')}>
+        <Boton variante="blanco" className="min-h-10 px-5 text-[14px]" onClick={() => {
+            if (d.descarga) descargar(urlDescarga(d.descarga.trabajo))
+            avisar('Imagen descargada con la marca «Restaurada con IA»')
+          }}>
           <Download size={17} /> Descargar
         </Boton>
       </div>
