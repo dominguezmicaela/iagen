@@ -1,7 +1,9 @@
 import { Check, Columns2, RotateCcw } from 'lucide-react'
 import { useEffect, useState } from 'react'
-import { EJECUCION, REVELADO, SEMILLAS, SUB_TAREAS } from '../datos/ejemplo'
+import { EJECUCION, ES_EJEMPLO, REVELADO, SEMILLAS, SUB_TAREAS } from '../datos/ejemplo'
+import { pasosFotograma } from '../datos/vista'
 import { useEstado } from '../estado'
+import { useAvisar } from '../components/avisos'
 import { Actual, BotonIcono, Diseno, Enlace, Seccion, cx } from '../components/ui'
 
 const fmt = (n: number | string) => String(n).replace('.', ',')
@@ -13,15 +15,33 @@ const FASES = [
 ]
 
 export function Revelando() {
-  const { subTarea, semilla, ajustes } = useEstado()
+  const { subTarea, semilla, ajustes, trabajo, historial, iniciar, enviando } = useEstado()
+  const avisar = useAvisar()
   const t = SUB_TAREAS[subTarea]
   const valor = (clave: string) => ajustes[subTarea]?.[clave] ?? t.parametros.find((p) => p.clave === clave)?.valor ?? 0
-  const total = valor('steps') || 50
-  const salida = SEMILLAS.find((s) => s.valor === semilla)?.imagen ?? SEMILLAS[0].imagen
-  const [paso, setPaso] = useState(0)
+  const [pasoDemo, setPaso] = useState(0)
   const [vuelta, setVuelta] = useState(0)
+  const real = !ES_EJEMPLO
+  const fallo = real && trabajo?.estado === 'error'
 
   useEffect(() => {
+    if (fallo) avisar(trabajo?.error ?? 'No se pudo restaurar la imagen.', 'error')
+  }, [fallo, trabajo?.error, avisar])
+
+  // En el modo real todo sale del trabajo; la simulación queda solo para la demo.
+  const totalDemo = valor('steps') || 50
+  const enCurso = real && trabajo !== null && trabajo.estado !== 'listo'
+  const total = real ? trabajo?.total || totalDemo : totalDemo
+  const enPrincipal = real ? (trabajo?.semilla_indice ?? 0) === 0 && ['en_cola', 'restaurando'].includes(trabajo?.estado ?? 'en_cola') : true
+  const paso = real ? (enPrincipal ? (trabajo?.paso ?? 0) : total) : pasoDemo
+  const salidaReal = trabajo?.resultado?.semillas[0]?.imagen
+  const fotogramasReales = trabajo?.fotogramas ?? []
+  const salida = real
+    ? (salidaReal ?? fotogramasReales.at(-1)?.imagen ?? historial.find((h) => h.id === trabajo?.id)?.miniatura ?? '')
+    : (SEMILLAS.find((s) => s.valor === semilla)?.imagen ?? SEMILLAS[0].imagen)
+
+  useEffect(() => {
+    if (real) return
     const id = window.setInterval(() => {
       setPaso((p) => {
         if (p >= total) {
@@ -32,29 +52,40 @@ export function Revelando() {
       })
     }, 5200 / total)
     return () => window.clearInterval(id)
-  }, [total, vuelta])
+  }, [total, vuelta, real])
 
   const avance = paso / total
-  const listo = paso >= total
+  const listo = real ? trabajo?.estado === 'listo' : paso >= total
   const faseActual = listo ? FASES.length : FASES.findIndex((f) => avance <= f.hasta)
-  const restante = Math.max(0, (total - paso) * EJECUCION.segundosPorPaso)
-  const fotogramas = [...REVELADO.fotogramas.map((f) => ({ ...f, paso: Math.round((f.paso / 50) * total) })), { paso: total, imagen: salida }]
+  const pasosRestantes = real ? ((trabajo?.semillas_total ?? 1) - (trabajo?.semilla_indice ?? 0)) * total - (trabajo?.paso ?? 0) : total - paso
+  const restante = Math.max(0, pasosRestantes * (real ? (trabajo?.segundos_por_paso ?? 0) : EJECUCION.segundosPorPaso))
+  const avanceBarra = real && !enPrincipal ? (trabajo?.estado === 'restaurando' ? (trabajo.paso ?? 0) / total : 1) : avance
+  const fotogramas = real
+    ? [...pasosFotograma(total).map((p) => ({ paso: p, imagen: fotogramasReales.find((f) => f.paso === p)?.imagen ?? '' })), { paso: total, imagen: salidaReal ?? '' }]
+    : [...REVELADO.fotogramas.map((f) => ({ ...f, paso: Math.round((f.paso / 50) * total) })), { paso: total, imagen: salida }]
+  const textoBarra = fallo ? 'Error' : listo ? 'Restaurada' : real && !enPrincipal ? trabajo?.etapa : FASES[faseActual]?.titulo
+  const repetir = () =>
+    real
+      ? iniciar().catch((e: Error) => avisar(e.message, 'error'))
+      : (setPaso(0), setVuelta((v) => v + 1))
 
   const principal = (
     <div className="flex min-h-full flex-col gap-6 p-6">
       <header>
-        <h1 className="titular text-[clamp(30px,3vw,44px)]">{listo ? 'Restaurada' : 'Restaurando tu foto'}</h1>
-        <p className="mt-2 text-[15px] text-gris">{t.titulo}, con {t.modelo}</p>
+        <h1 className="titular text-[clamp(30px,3vw,44px)]">{fallo ? 'No se pudo restaurar' : listo ? 'Restaurada' : 'Restaurando tu foto'}</h1>
+        <p className="mt-2 text-[15px] text-gris">{fallo ? trabajo?.error : `${t.titulo}, con ${t.modelo}`}</p>
       </header>
 
       <div className="flex min-h-[240px] flex-1 items-center justify-center">
         <div className="relative aspect-[3/2] w-full max-h-full max-w-full overflow-hidden rounded-lg bg-black lg:h-full lg:w-auto">
-          <img
-            src={salida}
-            alt={listo ? 'Imagen restaurada' : `Imagen a mitad de la difusión, paso ${paso} de ${total}`}
-            className="absolute inset-0 size-full scale-[1.06] object-cover"
-            style={{ filter: `blur(${(1 - avance) * 22}px) saturate(${0.3 + avance * 0.7}) brightness(${0.75 + 0.25 * avance})` }}
-          />
+          {salida && (
+            <img
+              src={salida}
+              alt={listo ? 'Imagen restaurada' : `Imagen a mitad de la difusión, paso ${paso} de ${total}`}
+              className="absolute inset-0 size-full scale-[1.06] object-cover"
+              style={real && (salidaReal || fotogramasReales.length) ? undefined : { filter: `blur(${(1 - avance) * 22}px) saturate(${0.3 + avance * 0.7}) brightness(${0.75 + 0.25 * avance})` }}
+            />
+          )}
           <svg aria-hidden="true" className="absolute inset-0 size-full mix-blend-overlay" style={{ opacity: Math.pow(1 - avance, 0.8) * 0.9 }}>
             <filter id="grano">
               <feTurbulence type="fractalNoise" baseFrequency="0.85" numOctaves="2" stitchTiles="stitch" seed={paso} />
@@ -68,7 +99,7 @@ export function Revelando() {
       <Seccion titulo="Cómo fue apareciendo">
         <ol className="grid grid-cols-3 gap-3 sm:grid-cols-6">
           {fotogramas.map((f) => {
-            const visto = paso >= f.paso
+            const visto = real ? Boolean(f.imagen) : paso >= f.paso
             return (
               <li key={f.paso} className="rounded-lg bg-tarjeta p-2">
                 <span className="block aspect-[16/9] overflow-hidden rounded-md bg-tarjeta-2">
@@ -127,23 +158,21 @@ export function Revelando() {
 
       <p className="rounded-md bg-tarjeta-2 p-3.5 text-[13px] leading-snug text-gris">
         <strong className="block text-white">Probá otra semilla después.</strong>
-        Con otra semilla el detalle inventado cambia. En la próxima pantalla vas a poder comparar cuatro.
+        Con otra semilla el detalle inventado cambia. En la próxima pantalla vas a poder comparar las que se generaron.
       </p>
     </div>
   )
 
   const barra = (
     <>
-      <Actual imagen={t.entrada} titulo={t.archivo} subtitulo={listo ? 'Restaurada' : FASES[faseActual]?.titulo} />
+      <Actual
+        imagen={real ? historial.find((h) => h.id === trabajo?.id)?.miniatura : t.entrada}
+        titulo={real ? (historial.find((h) => h.id === trabajo?.id)?.archivo ?? 'Sin restauración en curso') : t.archivo}
+        subtitulo={textoBarra}
+      />
       <div className="flex w-full max-w-[560px] flex-col items-center gap-1.5 justify-self-center">
         <div className="flex items-center gap-2">
-          <BotonIcono
-            etiqueta="Repetir"
-            onClick={() => {
-              setPaso(0)
-              setVuelta((v) => v + 1)
-            }}
-          >
+          <BotonIcono etiqueta="Repetir" onClick={repetir} disabled={enviando || enCurso}>
             <RotateCcw size={18} />
           </BotonIcono>
           {listo ? (
@@ -157,14 +186,16 @@ export function Revelando() {
           )}
         </div>
         <div className="flex w-full items-center gap-3 text-[12px] text-gris" aria-live="polite">
-          <span className="w-14 text-right">Paso {paso}</span>
+          <span className="w-14 text-right">Paso {real && !enPrincipal ? (trabajo?.paso ?? 0) : paso}</span>
           <div className="h-1 flex-1 overflow-hidden rounded-full bg-white/25" role="progressbar" aria-valuemin={0} aria-valuemax={total} aria-valuenow={paso} aria-label="Pasos de difusión">
-            <div className="fondo-ia h-full rounded-full transition-[width] duration-100" style={{ width: `${avance * 100}%` }} />
+            <div className="fondo-ia h-full rounded-full transition-[width] duration-100" style={{ width: `${avanceBarra * 100}%` }} />
           </div>
           <span className="w-14">{total}</span>
         </div>
       </div>
-      <p className="hidden text-right text-[13px] text-gris sm:block">{listo ? 'Listo' : `Faltan ${fmt(restante.toFixed(1))} s`}</p>
+      <p className="hidden text-right text-[13px] text-gris sm:block">
+        {fallo ? 'Error' : listo ? 'Listo' : trabajo?.estado === 'verificando' ? 'Verificando…' : trabajo?.estado === 'en_cola' ? 'En cola' : `Faltan ${fmt(restante.toFixed(1))} s`}
+      </p>
     </>
   )
 
