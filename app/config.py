@@ -14,3 +14,9 @@ PROMPT = "a high quality photo"
 NEGATIVE_PROMPT = "blurry, low quality, jpeg artifacts, distorted, oversaturated"
 
 SALIDAS = Path(os.getenv("RESTAURA_SALIDAS", "salidas"))
+
+MODELO_CLIP = "openai/clip-vit-base-patch32"
+MODELO_BLIP = "Salesforce/blip-image-captioning-large"
+MODELO_DETR = "facebook/detr-resnet-50"
+DETR = os.getenv("RESTAURA_DETR", "1" if DISPOSITIVO == "cuda" else "0") == "1"
+UMBRAL_DETR = 0.7
