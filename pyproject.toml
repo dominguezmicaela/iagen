@@ -1,0 +1,40 @@
+[project]
+name = "restauracion-difusion"
+version = "0.1.0"
+description = "Super-resolución ×4 con difusión y verificación de qué es real y qué es inventado"
+readme = "README.md"
+requires-python = ">=3.12,<3.13"
+dependencies = [
+    "accelerate",
+    "diffusers",
+    "fastapi",
+    "numpy",
+    "pillow",
+    "python-multipart",
+    "safetensors",
+    "scipy",
+    "timm",
+    "torch>=2.7",
+    "torchvision",
+    "transformers",
+    "uvicorn[standard]",
+]
+
+[dependency-groups]
+dev = ["httpx", "pytest", "ruff"]
+
+# RTX 5060 Ti (Blackwell, sm_120) necesita las ruedas de CUDA 12.8
+[tool.uv.sources]
+torch = [{ index = "pytorch-cu128", marker = "sys_platform == 'linux' or sys_platform == 'win32'" }]
+torchvision = [{ index = "pytorch-cu128", marker = "sys_platform == 'linux' or sys_platform == 'win32'" }]
+
+[[tool.uv.index]]
+name = "pytorch-cu128"
+url = "https://download.pytorch.org/whl/cu128"
+explicit = true
+
+[tool.uv]
+package = false
+
+[tool.ruff]
+line-length = 110
