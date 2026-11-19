@@ -1,6 +1,6 @@
 import { ChevronDown, Columns2, FlaskConical, Flashlight, History, Plus, Upload, Wand } from 'lucide-react'
 import type { ReactNode } from 'react'
-import { ES_EJEMPLO, SUB_TAREAS, type SubTareaId } from '../datos/ejemplo'
+import { ES_EJEMPLO, SUB_TAREA_IDS, SUB_TAREAS } from '../datos/ejemplo'
 import { useEstado } from '../contexto'
 import { PANTALLAS, type PantallaId } from '../navegacion'
 import { cx } from '../utilidades'
@@ -26,9 +26,8 @@ export function Logo() {
 /** Restauraciones de la sesión (en el modo demo, los tres ejemplos). */
 function useRestauraciones() {
   const { pantalla, subTarea, setSubTarea, setEntradaElegida, historial, trabajo, abrir } = useEstado()
-  const ids: SubTareaId[] = ['A', 'B', 'C']
   return ES_EJEMPLO
-    ? ids.map((id) => ({
+    ? SUB_TAREA_IDS.map((id) => ({
         clave: id,
         miniatura: SUB_TAREAS[id].entrada,
         archivo: SUB_TAREAS[id].archivo,

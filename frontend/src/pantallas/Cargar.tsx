@@ -1,10 +1,11 @@
 import { LoaderCircle, Play, ShieldCheck } from 'lucide-react'
 import { useEstado } from '../contexto'
-import { disponible, ES_EJEMPLO, SUB_TAREA_IDS, SUB_TAREAS } from '../datos/ejemplo'
-import { SelectorSubTarea } from '../components/SelectorSubTarea'
+import { ES_EJEMPLO, SUB_TAREAS } from '../datos/ejemplo'
+import { TareaElegida } from '../components/TareaElegida'
 import { useAvisar } from '../components/usarAvisos'
 import { ZonaCarga } from '../components/ZonaCarga'
-import { Actual, Boton, Capsula, Diseno, Enlace, Rango, Seccion, Tarjeta } from '../components/ui'
+import { Actual, Boton, Diseno, Enlace, Rango, Seccion } from '../components/ui'
+import { cx } from '../utilidades'
 
 const MAX_BYTES = 10 * 1024 * 1024
 
@@ -15,12 +16,12 @@ const NIVELES = [
 ]
 
 export function Cargar() {
-  const { subTarea, setSubTarea, entradaElegida, setEntradaElegida, archivoPropio, setArchivoPropio, ajustes, setAjuste, enviando, iniciar } = useEstado()
+  const { subTarea, entradaElegida, setEntradaElegida, archivoPropio, setArchivoPropio, ajustes, setAjuste, enviando, iniciar } = useEstado()
   const avisar = useAvisar()
   const t = SUB_TAREAS[subTarea]
   const valor = (clave: string) => ajustes[subTarea]?.[clave] ?? t.parametros.find((p) => p.clave === clave)!.valor
   const p0 = t.parametros[0]
-  const libertad = Math.min(1, ((valor(p0.clave) - p0.min) / (p0.max - p0.min)) * 0.7 + (subTarea === 'C' ? 0.35 : 0.1))
+  const libertad = Math.min(1, ((valor(p0.clave) - p0.min) / (p0.max - p0.min)) * 0.7 + 0.1)
   const nivel = NIVELES.find((n) => libertad < n.hasta)!
 
   const usarArchivo = (f?: File) => {
@@ -52,35 +53,34 @@ export function Cargar() {
       <ZonaCarga vista={vista} onArchivo={usarArchivo} onQuitar={() => setEntradaElegida(null)} />
 
       <Seccion titulo="Probá con un ejemplo">
-        <div className="grid grid-cols-3 gap-3">
-          {SUB_TAREA_IDS.map((id) => (
-            <Tarjeta
-              key={id}
-              imagen={SUB_TAREAS[id].entrada}
-              titulo={SUB_TAREAS[id].titulo}
-              subtitulo={SUB_TAREAS[id].archivo}
-              activa={entradaElegida === id}
-              etiqueta={`Usar el ejemplo ${SUB_TAREAS[id].titulo}`}
-              insignia={!disponible(id) && <Capsula>Próximamente</Capsula>}
-              onClick={
-                disponible(id)
-                  ? () => {
-                      setEntradaElegida(id)
-                      setSubTarea(id)
-                    }
-                  : undefined
-              }
-            />
-          ))}
-        </div>
+        <button
+          type="button"
+          onClick={() => setEntradaElegida(subTarea)}
+          aria-pressed={entradaElegida === subTarea}
+          className={cx(
+            'flex items-center gap-4 rounded-lg p-2.5 text-left transition-colors duration-200',
+            entradaElegida === subTarea ? 'bg-tarjeta-2 ring-1 ring-fluor/60' : 'bg-tarjeta hover:bg-tarjeta-2',
+          )}
+        >
+          <img src={t.entrada} alt="" className="aspect-[16/9] w-40 shrink-0 rounded-md object-cover" />
+          <span className="min-w-0">
+            <span className="block truncate text-[15px] font-bold">{t.archivo}</span>
+            <span className="block text-[13px] text-gris">
+              {t.medidas}: una foto chica, ideal para ver qué inventa el modelo al agrandarla.
+            </span>
+            <span className={cx('mt-1 block text-[13px] font-bold', entradaElegida === subTarea ? 'text-fluor' : 'text-white')}>
+              {entradaElegida === subTarea ? 'Elegida' : 'Usar este ejemplo'}
+            </span>
+          </span>
+        </button>
       </Seccion>
     </div>
   )
 
   const panel = (
     <div className="flex flex-col gap-7 p-5">
-      <Seccion titulo="Qué querés arreglar">
-        <SelectorSubTarea valor={subTarea} onChange={setSubTarea} />
+      <Seccion titulo="Qué va a hacer">
+        <TareaElegida id={subTarea} />
       </Seccion>
 
       <Seccion titulo="Ajustes">
@@ -130,5 +130,5 @@ export function Cargar() {
     </>
   )
 
-  return <Diseno principal={principal} panel={panel} barra={barra} etiquetaPanel="Qué querés arreglar" />
+  return <Diseno principal={principal} panel={panel} barra={barra} etiquetaPanel="Qué va a hacer" />
 }

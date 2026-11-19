@@ -13,11 +13,7 @@
  */
 
 import difA from '../assets/ejemplo/dif_A.jpg'
-import difB from '../assets/ejemplo/dif_B.jpg'
-import difC from '../assets/ejemplo/dif_C.jpg'
 import entradaA from '../assets/ejemplo/entrada_A.jpg'
-import entradaB from '../assets/ejemplo/entrada_B.jpg'
-import entradaC from '../assets/ejemplo/entrada_C.jpg'
 import paso05 from '../assets/ejemplo/paso_05.jpg'
 import paso15 from '../assets/ejemplo/paso_15.jpg'
 import paso25 from '../assets/ejemplo/paso_25.jpg'
@@ -32,12 +28,10 @@ import variacion from '../assets/ejemplo/variacion.jpg'
 /** Con `?demo=1` en la URL la app usa estos datos y no necesita el backend. */
 export const ES_EJEMPLO = typeof window !== 'undefined' && new URLSearchParams(window.location.search).has('demo')
 
-export type SubTareaId = 'A' | 'B' | 'C'
+/** El proyecto resuelve la sub-tarea A de la consigna: super-resolución. */
+export type SubTareaId = 'A'
 
-export const SUB_TAREA_IDS: SubTareaId[] = ['A', 'B', 'C']
-
-/** Sin backend para B y C: solo se pueden recorrer en el modo demo. */
-export const disponible = (id: SubTareaId) => ES_EJEMPLO || id === 'A'
+export const SUB_TAREA_IDS: SubTareaId[] = ['A']
 
 export interface Parametro {
   clave: string
@@ -89,48 +83,6 @@ export const SUB_TAREAS: Record<SubTareaId, SubTarea> = {
     prompt: 'a high quality photo',
     real: ['Composición y encuadre', 'Formas y contornos grandes', 'Colores dominantes'],
     inventado: ['Textura fina', 'Bordes nítidos y detalles chicos', 'Letras, números y patrones pequeños'],
-  },
-  B: {
-    id: 'B',
-    titulo: 'Ruido o movida',
-    tecnico: 'Denoising y deblurring',
-    bajada: 'Limpia el grano y el desenfoque.',
-    inventa: 'bordes que el desenfoque borró',
-    modelo: 'stable-diffusion-v1-5 (img2img)',
-    archivo: 'gato_movida_ruido.jpg',
-    medidas: '900 × 600 px',
-    entrada: entradaB,
-    diferencias: difB,
-    aviso: 'El detalle que el desenfoque había borrado no se recuperó: lo estimó el modelo. Las zonas nítidas son una reconstrucción.',
-    parametros: [
-      { clave: 'strength', etiqueta: 'Fuerza', valor: 0.3, min: 0.05, max: 1, paso: 0.05 },
-      { clave: 'steps', etiqueta: 'Pasos', valor: 30, min: 10, max: 100, paso: 5 },
-      { clave: 'guidance', etiqueta: 'Guidance', valor: 5, min: 0, max: 15, paso: 0.5 },
-    ],
-    prompt: 'a sharp, detailed photo',
-    real: ['Composición y encuadre', 'Pose y forma del gato', 'Luz general'],
-    inventado: ['Bordes nítidos', 'Pelaje y bigotes', 'Detalle del fondo'],
-  },
-  C: {
-    id: 'C',
-    titulo: 'Foto antigua',
-    tecnico: 'Restauración y colorización',
-    bajada: 'Repara rayas y manchas, y le pone color.',
-    inventa: 'todo el color y lo que tapaban las rayas',
-    modelo: 'stable-diffusion-v1-5 + ControlNet tile',
-    archivo: 'foto_antigua_gato.jpg',
-    medidas: '900 × 600 px, sepia',
-    entrada: entradaC,
-    diferencias: difC,
-    aviso: 'Todo el color es inferido: la entrada era monocromática. El color de ojos y pelaje es una suposición, y las rayas se rellenaron con contenido generado.',
-    parametros: [
-      { clave: 'strength', etiqueta: 'Fuerza', valor: 0.45, min: 0.05, max: 1, paso: 0.05 },
-      { clave: 'steps', etiqueta: 'Pasos', valor: 40, min: 10, max: 100, paso: 5 },
-      { clave: 'guidance', etiqueta: 'Guidance', valor: 6, min: 0, max: 15, paso: 0.5 },
-    ],
-    prompt: 'a restored color photograph',
-    real: ['Composición y encuadre', 'Pose y forma del gato', 'Luces y sombras'],
-    inventado: ['Todos los colores', 'Zonas bajo las rayas', 'Textura del pelaje'],
   },
 }
 
@@ -190,32 +142,6 @@ export const VERIFICACION: Record<SubTareaId, Verificacion> = {
     descripcionSalida: salidaComun,
     descripcionResumen: '2 atributos nuevos. Verificá si se ven en la entrada.',
   },
-  B: {
-    clip: [
-      { etiqueta: 'a photo of a cat', entrada: 0.64, salida: 0.87 },
-      { etiqueta: 'a blurry, noisy photo', entrada: 0.24, salida: 0.03 },
-      { etiqueta: 'a drawing', entrada: 0.06, salida: 0.07 },
-    ],
-    clipResumen: 'El contenido se mantiene: sigue siendo un gato.',
-    detr: [{ objeto: 'cat', entrada: 0.84, salida: 0.98 }],
-    detrResumen: 'Mismos objetos, más confianza.',
-    descripcionEntrada: 'a blurry photo of a cat',
-    descripcionSalida: salidaComun,
-    descripcionResumen: '2 atributos nuevos. Verificá si se ven en la entrada.',
-  },
-  C: {
-    clip: [
-      { etiqueta: 'a photo of a cat', entrada: 0.58, salida: 0.88 },
-      { etiqueta: 'an old black and white photo', entrada: 0.31, salida: 0.03 },
-      { etiqueta: 'a drawing', entrada: 0.06, salida: 0.06 },
-    ],
-    clipResumen: 'El contenido se mantiene: sigue siendo un gato.',
-    detr: [{ objeto: 'cat', entrada: 0.79, salida: 0.97 }],
-    detrResumen: 'Mismos objetos, más confianza.',
-    descripcionEntrada: 'an old photo of a cat',
-    descripcionSalida: salidaComun,
-    descripcionResumen: '«green eyes» es inventado: la entrada no tenía color.',
-  },
 }
 
 /** Mapas en escala de grises (0 = sin cambio, blanco = cambio alto). */
@@ -229,13 +155,11 @@ export const MAPAS = {
  */
 export const PORCENTAJES: Record<SubTareaId | 'variacion', number[]> = {
   A: [83.3, 58.2, 47.5, 40.1, 32.9, 26.2, 20.6, 16.2, 12.4, 9.4, 7.2, 5.5, 4.2, 3.1, 2.3, 1.7, 1.3, 0.9, 0.7],
-  B: [100, 100, 98.6, 81.9, 56.7, 41.4, 30.9, 23.7, 17.8, 13.3, 9.8, 7.3, 5.3, 3.8, 2.7, 2, 1.4, 1, 0.7],
-  C: [99.8, 96.7, 81.4, 66, 52.3, 40.1, 30.2, 23.6, 19.1, 15.8, 13.2, 10.9, 9, 7.3, 5.4, 3.8, 2.7, 1.9, 1.1],
   variacion: [75.7, 58.4, 47.8, 40.1, 33.2, 26.9, 21.6, 17.2, 13.8, 11, 8.7, 6.8, 5.2, 3.9, 2.9, 2.1, 1.5, 1.1, 0.7],
 }
 
 /** Cambio medio por píxel (%), sin normalizar. */
-export const CAMBIO_MEDIO: Record<SubTareaId, number> = { A: 1.2, B: 2.3, C: 12.1 }
+export const CAMBIO_MEDIO: Record<SubTareaId, number> = { A: 1.2 }
 
 /** Zonas marcadas sobre la imagen (x, y en % del ancho / alto). */
 export const MARCAS = [
