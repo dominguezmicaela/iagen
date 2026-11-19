@@ -1,6 +1,6 @@
 # Instrucciones para agentes
 
-Proyecto: TP Integrador 2 (IFTS 24). Super-resolución ×4 con difusión, con verificación de qué es real y qué es inventado. Leé el `README.md` antes de cambiar algo.
+Proyecto: TP Integrador 2 (IFTS). Super-resolución ×4 con difusión, con verificación de qué es real y qué es inventado. Leé el `README.md` antes de cambiar algo.
 
 ## Stack
 
