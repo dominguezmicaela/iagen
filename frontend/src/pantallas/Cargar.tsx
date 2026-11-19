@@ -1,16 +1,12 @@
-import { Focus, ImagePlus, LoaderCircle, Palette, Play, ShieldCheck, X, ZoomIn } from 'lucide-react'
-import { useState, type DragEvent, type ReactNode } from 'react'
-import { ES_EJEMPLO, SEMILLAS, SUB_TAREAS, type SubTareaId } from '../datos/ejemplo'
-import { useEstado } from '../estado'
-import { useAvisar } from '../components/avisos'
-import { LamparaUV } from '../components/LamparaUV'
-import { Actual, Boton, Capsula, Diseno, Enlace, Rango, Seccion, Tarjeta, cx } from '../components/ui'
+import { LoaderCircle, Play, ShieldCheck } from 'lucide-react'
+import { useEstado } from '../contexto'
+import { disponible, ES_EJEMPLO, SUB_TAREA_IDS, SUB_TAREAS } from '../datos/ejemplo'
+import { SelectorSubTarea } from '../components/SelectorSubTarea'
+import { useAvisar } from '../components/usarAvisos'
+import { ZonaCarga } from '../components/ZonaCarga'
+import { Actual, Boton, Capsula, Diseno, Enlace, Rango, Seccion, Tarjeta } from '../components/ui'
 
-const IDS: SubTareaId[] = ['A', 'B', 'C']
 const MAX_BYTES = 10 * 1024 * 1024
-/** Sin backend para B y C: solo se pueden recorrer en el modo demo. */
-const disponible = (id: SubTareaId) => ES_EJEMPLO || id === 'A'
-const ICONO: Record<SubTareaId, ReactNode> = { A: <ZoomIn size={22} />, B: <Focus size={22} />, C: <Palette size={22} /> }
 
 const NIVELES = [
   { hasta: 0.34, texto: 'Poca' },
@@ -21,7 +17,6 @@ const NIVELES = [
 export function Cargar() {
   const { subTarea, setSubTarea, entradaElegida, setEntradaElegida, archivoPropio, setArchivoPropio, ajustes, setAjuste, enviando, iniciar } = useEstado()
   const avisar = useAvisar()
-  const [encima, setEncima] = useState(false)
   const t = SUB_TAREAS[subTarea]
   const valor = (clave: string) => ajustes[subTarea]?.[clave] ?? t.parametros.find((p) => p.clave === clave)!.valor
   const p0 = t.parametros[0]
@@ -35,11 +30,6 @@ export function Cargar() {
     if (archivoPropio) URL.revokeObjectURL(archivoPropio.url)
     setArchivoPropio({ url: URL.createObjectURL(f), nombre: f.name, archivo: f })
     setEntradaElegida('propia')
-  }
-  const alSoltar = (e: DragEvent) => {
-    e.preventDefault()
-    setEncima(false)
-    usarArchivo(e.dataTransfer.files[0])
   }
 
   const vista =
@@ -59,61 +49,11 @@ export function Cargar() {
         </p>
       </header>
 
-      <div className="relative flex min-h-[260px] flex-1">
-        <label
-          onDragOver={(e) => {
-            e.preventDefault()
-            setEncima(true)
-          }}
-          onDragLeave={() => setEncima(false)}
-          onDrop={alSoltar}
-          className={cx(
-            'group relative flex flex-1 cursor-pointer overflow-hidden rounded-lg bg-black transition-all duration-300 has-[:focus-visible]:outline-2 has-[:focus-visible]:outline-offset-2 has-[:focus-visible]:outline-white',
-            encima && 'ring-2 ring-fluor',
-          )}
-        >
-          <input type="file" accept="image/*" className="sr-only" onChange={(e) => usarArchivo(e.target.files?.[0])} />
-          {vista ? (
-            <img key={vista.src} src={vista.src} alt={`Imagen elegida: ${vista.nombre}`} className="absolute inset-0 size-full animate-entrar object-contain" />
-          ) : (
-            <>
-              <LamparaUV decorativa base={SEMILLAS[0].imagen} mapa={SUB_TAREAS.A.diferencias} umbral={40} intensidad={0.95} completa={false} marcas={false} descripcion="" />
-              <div aria-hidden="true" className="absolute inset-0 bg-gradient-to-t from-black/85 via-black/10 to-transparent" />
-              <div className="pointer-events-none absolute top-3 right-3">
-                <Capsula tono="ia">Lo que se ilumina lo inventó la IA</Capsula>
-              </div>
-              <div className="absolute inset-x-0 bottom-0 flex items-center gap-4 p-5">
-                <span className="fondo-ia grid size-14 shrink-0 place-items-center rounded-full text-black shadow-[0_8px_24px_rgb(0_0_0/0.5)] transition-transform duration-200 group-hover:scale-105">
-                  <ImagePlus size={24} />
-                </span>
-                <span>
-                  <span className="block text-[20px] font-extrabold">{encima ? 'Soltala para usarla' : 'Arrastrá tu foto o elegila'}</span>
-                  <span className="block text-[14px] text-gris">JPG o PNG, hasta 10 MB. Se procesa en tu computadora.</span>
-                </span>
-              </div>
-            </>
-          )}
-        </label>
-        {vista && (
-          <>
-            <div className="pointer-events-none absolute top-3 left-3">
-              <Capsula>{vista.nombre}</Capsula>
-            </div>
-            <button
-              type="button"
-              onClick={() => setEntradaElegida(null)}
-              className="absolute top-2 right-2 grid size-11 place-items-center rounded-full bg-black/60 text-white backdrop-blur transition hover:bg-black/80"
-              aria-label="Quitar imagen"
-            >
-              <X size={18} />
-            </button>
-          </>
-        )}
-      </div>
+      <ZonaCarga vista={vista} onArchivo={usarArchivo} onQuitar={() => setEntradaElegida(null)} />
 
       <Seccion titulo="Probá con un ejemplo">
         <div className="grid grid-cols-3 gap-3">
-          {IDS.map((id) => (
+          {SUB_TAREA_IDS.map((id) => (
             <Tarjeta
               key={id}
               imagen={SUB_TAREAS[id].entrada}
@@ -140,31 +80,7 @@ export function Cargar() {
   const panel = (
     <div className="flex flex-col gap-7 p-5">
       <Seccion titulo="Qué querés arreglar">
-        <fieldset className="-mx-2 flex flex-col">
-          <legend className="sr-only">Tipo de restauración</legend>
-          {IDS.map((id) => {
-            const m = SUB_TAREAS[id]
-            const activo = subTarea === id
-            const habilitado = disponible(id)
-            return (
-              <label
-                key={id}
-                className={cx(
-                  'flex items-start gap-3 rounded-md p-2 transition-colors duration-200 has-[:focus-visible]:outline-2 has-[:focus-visible]:outline-white',
-                  activo ? 'bg-tarjeta-2' : habilitado ? 'cursor-pointer hover:bg-tarjeta' : 'cursor-not-allowed opacity-50',
-                )}
-              >
-                <input type="radio" name="modo" value={id} checked={activo} disabled={!habilitado} onChange={() => setSubTarea(id)} className="sr-only" />
-                <span className={cx('grid size-12 shrink-0 place-items-center rounded-md', activo ? 'fondo-ia text-black' : 'bg-elevado text-white')}>{ICONO[id]}</span>
-                <span className="min-w-0">
-                  <span className={cx('block text-[15px] font-bold', activo && 'text-fluor')}>{m.titulo}</span>
-                  <span className="block text-[13px] text-gris">{m.bajada}</span>
-                  <span className="mt-0.5 block text-[13px] text-fluor">{habilitado ? `Inventa ${m.inventa}.` : 'Próximamente.'}</span>
-                </span>
-              </label>
-            )
-          })}
-        </fieldset>
+        <SelectorSubTarea valor={subTarea} onChange={setSubTarea} />
       </Seccion>
 
       <Seccion titulo="Ajustes">

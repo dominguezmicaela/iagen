@@ -1,9 +1,6 @@
 import { Check, TriangleAlert } from 'lucide-react'
-import { createContext, useCallback, useContext, useRef, useState, type ReactNode } from 'react'
-
-const Ctx = createContext<(texto: string, tono?: Tono) => void>(() => {})
-
-type Tono = 'ok' | 'error'
+import { useCallback, useRef, useState, type ReactNode } from 'react'
+import { CtxAvisos, type Tono } from './usarAvisos'
 
 /** Avisos breves (toasts) que confirman una acción o cuentan qué falló. */
 export function ProveedorAvisos({ children }: { children: ReactNode }) {
@@ -16,7 +13,7 @@ export function ProveedorAvisos({ children }: { children: ReactNode }) {
   }, [])
 
   return (
-    <Ctx.Provider value={avisar}>
+    <CtxAvisos.Provider value={avisar}>
       {children}
       <div role="status" aria-live="polite" className="pointer-events-none fixed inset-x-0 bottom-6 z-50 flex justify-center px-4">
         {aviso && (
@@ -28,8 +25,6 @@ export function ProveedorAvisos({ children }: { children: ReactNode }) {
           </p>
         )}
       </div>
-    </Ctx.Provider>
+    </CtxAvisos.Provider>
   )
 }
-
-export const useAvisar = () => useContext(Ctx)

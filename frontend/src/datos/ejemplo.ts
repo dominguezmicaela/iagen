@@ -34,6 +34,11 @@ export const ES_EJEMPLO = typeof window !== 'undefined' && new URLSearchParams(w
 
 export type SubTareaId = 'A' | 'B' | 'C'
 
+export const SUB_TAREA_IDS: SubTareaId[] = ['A', 'B', 'C']
+
+/** Sin backend para B y C: solo se pueden recorrer en el modo demo. */
+export const disponible = (id: SubTareaId) => ES_EJEMPLO || id === 'A'
+
 export interface Parametro {
   clave: string
   etiqueta: string

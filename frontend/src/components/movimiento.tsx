@@ -1,27 +1,7 @@
-import { useEffect, useLayoutEffect, useRef, useState } from 'react'
-import { cx } from './ui'
+import { useEffect, useRef, useState } from 'react'
+import { cx } from '../utilidades'
 
 const sinMovimiento = () => typeof window !== 'undefined' && window.matchMedia?.('(prefers-reduced-motion: reduce)').matches
-
-/** Mide la posición de la opción activa para que la pastilla se deslice hasta ella. */
-export function useIndicador(activo: number, deps: unknown[] = []) {
-  const refs = useRef<(HTMLElement | null)[]>([])
-  const [caja, setCaja] = useState<{ left: number; width: number } | null>(null)
-
-  useLayoutEffect(() => {
-    const medir = () => {
-      const el = refs.current[activo]
-      if (el) setCaja({ left: el.offsetLeft, width: el.offsetWidth })
-    }
-    medir()
-    document.fonts?.ready.then(medir)
-    window.addEventListener('resize', medir)
-    return () => window.removeEventListener('resize', medir)
-    // eslint-disable-next-line react-hooks/exhaustive-deps
-  }, [activo, ...deps])
-
-  return { refs, caja }
-}
 
 /** Selector de opciones en chips (activo en blanco). */
 export function Segmentado<T extends string>({
@@ -61,10 +41,12 @@ export function NumeroAnimado({ valor, decimales = 1 }: { valor: number; decimal
   const [mostrado, setMostrado] = useState(valor)
   const actual = useRef(valor)
 
+  const quieto = sinMovimiento()
+
   useEffect(() => {
-    if (sinMovimiento()) {
+    if (quieto) {
+      // sin animación se muestra el valor directo (ver el return); solo se guarda como punto de partida
       actual.current = valor
-      setMostrado(valor)
       return
     }
     const desde = actual.current
@@ -79,7 +61,7 @@ export function NumeroAnimado({ valor, decimales = 1 }: { valor: number; decimal
     }
     raf = requestAnimationFrame(paso)
     return () => cancelAnimationFrame(raf)
-  }, [valor])
+  }, [valor, quieto])
 
-  return <>{mostrado.toFixed(decimales).replace('.', ',')}</>
+  return <>{(quieto ? valor : mostrado).toFixed(decimales).replace('.', ',')}</>
 }

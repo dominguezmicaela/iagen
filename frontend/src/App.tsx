@@ -1,6 +1,7 @@
-import { BarraLateral, EncabezadoMovil } from './components/BarraLateral'
+import { BarraSuperior, ColumnaRestauraciones } from './components/BarraSuperior'
 import { ProveedorAvisos } from './components/avisos'
-import { ProveedorEstado, useEstado } from './estado'
+import { useEstado } from './contexto'
+import { ProveedorEstado } from './estado'
 import { Analizar } from './pantallas/Analizar'
 import { Cargar } from './pantallas/Cargar'
 import { Comparar } from './pantallas/Comparar'
@@ -23,9 +24,9 @@ function Pantalla() {
 function Marco() {
   const { pantalla } = useEstado()
   return (
-    <div className="grid min-h-dvh grid-cols-[minmax(0,1fr)] gap-2 bg-negro p-2 lg:h-dvh lg:min-h-[740px] lg:grid-cols-[300px_minmax(0,1fr)] lg:grid-rows-[minmax(0,1fr)_auto]">
-      <BarraLateral />
-      <EncabezadoMovil />
+    <div className="grid min-h-dvh grid-cols-[minmax(0,1fr)] gap-2 bg-negro p-2 lg:h-dvh lg:min-h-[740px] lg:grid-cols-[300px_minmax(0,1fr)] lg:grid-rows-[auto_minmax(0,1fr)_auto]">
+      <BarraSuperior />
+      <ColumnaRestauraciones />
       <Pantalla key={pantalla} />
     </div>
   )

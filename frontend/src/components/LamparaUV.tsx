@@ -2,7 +2,8 @@ import { Flashlight } from 'lucide-react'
 import { useId, useState, type CSSProperties } from 'react'
 import type { Zona } from '../api'
 import { RAMPAS, tonoActual } from './tonoIA'
-import { Capsula, cx } from './ui'
+import { Capsula } from './ui'
+import { cx } from '../utilidades'
 
 /**
  * La lámpara UV: a la izquierda del haz, la foto con luz normal; a la derecha,

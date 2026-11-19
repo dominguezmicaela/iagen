@@ -1,8 +1,5 @@
 import type { ButtonHTMLAttributes, CSSProperties, ReactNode } from 'react'
-
-export function cx(...c: (string | false | null | undefined)[]) {
-  return c.filter(Boolean).join(' ')
-}
+import { cx } from '../utilidades'
 
 type Variante = 'marca' | 'blanco' | 'contorno' | 'fantasma'
 
@@ -212,25 +209,18 @@ export function Pista({ visible, children, style }: { visible: boolean; children
   )
 }
 
-/** Indica si el foco está en un campo de texto (para no robarle teclas). */
-export function escribiendo(e: KeyboardEvent) {
-  const t = e.target as HTMLElement | null
-  if (!t) return false
-  const tag = t.tagName
-  return tag === 'TEXTAREA' || (tag === 'INPUT' && !['range', 'checkbox', 'radio', 'button'].includes((t as HTMLInputElement).type)) || t.isContentEditable
-}
 
 /** Pantalla: zona principal + panel derecho + barra inferior (como un reproductor). */
 export function Diseno({ principal, panel, barra, etiquetaPanel }: { principal: ReactNode; panel: ReactNode; barra: ReactNode; etiquetaPanel: string }) {
   return (
     <>
-      <div className="grid min-h-0 grid-cols-[minmax(0,1fr)] gap-2 lg:col-start-2 lg:row-start-1 lg:grid-cols-[minmax(0,1fr)_360px]">
+      <div className="grid min-h-0 grid-cols-[minmax(0,1fr)] gap-2 lg:col-start-2 lg:row-start-2 lg:grid-cols-[minmax(0,1fr)_360px]">
         <main className="flex min-h-0 animate-entrar flex-col overflow-y-auto rounded-lg bg-fondo">{principal}</main>
         <aside aria-label={etiquetaPanel} className="flex min-h-0 animate-entrar flex-col overflow-y-auto rounded-lg bg-fondo">
           {panel}
         </aside>
       </div>
-      <footer className="sticky bottom-0 z-20 grid min-h-[84px] grid-cols-[minmax(0,1fr)] items-center gap-3 bg-negro px-2 py-2 sm:grid-cols-[minmax(0,1fr)_minmax(0,1.3fr)_minmax(0,1fr)] lg:col-span-2 lg:row-start-2 lg:px-3">
+      <footer className="sticky bottom-0 z-20 grid min-h-[84px] grid-cols-[minmax(0,1fr)] items-center gap-3 bg-negro px-2 py-2 sm:grid-cols-[minmax(0,1fr)_minmax(0,1.3fr)_minmax(0,1fr)] lg:col-span-2 lg:row-start-3 lg:px-3">
         {barra}
       </footer>
     </>

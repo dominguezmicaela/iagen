@@ -1,10 +1,11 @@
-import { Check, Columns2, RotateCcw } from 'lucide-react'
+import { Columns2, RotateCcw } from 'lucide-react'
 import { useEffect, useState } from 'react'
 import { EJECUCION, ES_EJEMPLO, REVELADO, SEMILLAS, SUB_TAREAS } from '../datos/ejemplo'
 import { pasosFotograma } from '../datos/vista'
-import { useEstado } from '../estado'
-import { useAvisar } from '../components/avisos'
-import { Actual, BotonIcono, Diseno, Enlace, Seccion, cx } from '../components/ui'
+import { useEstado } from '../contexto'
+import { FasesModelo, TiraFotogramas } from '../components/ProgresoDifusion'
+import { useAvisar } from '../components/usarAvisos'
+import { Actual, BotonIcono, Diseno, Enlace, Seccion } from '../components/ui'
 
 const fmt = (n: number | string) => String(n).replace('.', ',')
 
@@ -96,51 +97,14 @@ export function Revelando() {
         </div>
       </div>
 
-      <Seccion titulo="Cómo fue apareciendo">
-        <ol className="grid grid-cols-3 gap-3 sm:grid-cols-6">
-          {fotogramas.map((f) => {
-            const visto = real ? Boolean(f.imagen) : paso >= f.paso
-            return (
-              <li key={f.paso} className="rounded-lg bg-tarjeta p-2">
-                <span className="block aspect-[16/9] overflow-hidden rounded-md bg-tarjeta-2">
-                  {visto && <img src={f.imagen} alt="" className="size-full animate-entrar object-cover" />}
-                </span>
-                <span className={cx('mt-1.5 block text-[13px] font-bold', !visto && 'text-gris-2')}>{f.paso === total ? 'Final' : `Paso ${f.paso}`}</span>
-              </li>
-            )
-          })}
-        </ol>
-      </Seccion>
+      <TiraFotogramas fotogramas={fotogramas.map((f) => ({ ...f, visto: real ? Boolean(f.imagen) : paso >= f.paso }))} total={total} />
     </div>
   )
 
   const panel = (
     <div className="flex flex-col gap-7 p-5">
       <Seccion titulo="Qué está haciendo el modelo">
-        <ol className="-mx-2 flex flex-col">
-          {FASES.map((f, i) => {
-            const hecho = i < faseActual
-            const ahora = i === faseActual
-            return (
-              <li key={f.titulo} className={cx('flex items-start gap-3 rounded-md p-2 transition-colors duration-300', ahora && 'bg-tarjeta-2')}>
-                <span
-                  className={cx(
-                    'grid size-9 shrink-0 place-items-center rounded-full text-[14px] font-bold',
-                    hecho && 'bg-white text-black',
-                    ahora && 'fondo-ia text-black',
-                    !hecho && !ahora && 'bg-elevado text-gris',
-                  )}
-                >
-                  {hecho ? <Check size={16} strokeWidth={3} /> : i + 1}
-                </span>
-                <span>
-                  <span className={cx('block text-[15px] font-bold', ahora && 'text-fluor', !hecho && !ahora && 'text-gris')}>{f.titulo}</span>
-                  <span className="block text-[13px] text-gris">{f.detalle}</span>
-                </span>
-              </li>
-            )
-          })}
-        </ol>
+        <FasesModelo fases={FASES} actual={faseActual} />
       </Seccion>
 
       <Seccion titulo="Configuración">

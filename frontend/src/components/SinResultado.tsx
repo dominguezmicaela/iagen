@@ -1,5 +1,5 @@
 import { ImagePlus, Wand } from 'lucide-react'
-import { useEstado } from '../estado'
+import { useEstado } from '../contexto'
 import { Actual, Diseno, Enlace } from './ui'
 
 // Lo que ven Revisar y Lámpara UV cuando todavía no hay una restauración terminada.
