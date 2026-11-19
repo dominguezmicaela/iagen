@@ -1,0 +1,290 @@
+<!doctype html>
+<html lang="es">
+<head>
+<meta charset="utf-8">
+<title>Especificación de Requisitos de Software — Lámpara UV</title>
+<link rel="stylesheet" href="estilo.css">
+<style>@page { @top-right { content: "Especificación de Requisitos de Software — Lámpara UV"; } } @page :first { @top-right { content: none; } @bottom-center { content: none; } }</style>
+</head>
+<body>
+
+<section class="portada">
+  <div class="institucion">
+    <strong>Instituto de Formación Técnica Superior (IFTS)</strong>
+    Tecnicatura Superior en Ciencia de Datos e Inteligencia Artificial<br>
+    Procesamiento Digital de Imágenes e Introducción a Visión por Computadora
+  </div>
+  <div class="centro">
+    <div class="tipo">Especificación de Requisitos de Software</div>
+    <h1>Lámpara UV:<br>restauración de imágenes con difusión</h1>
+    <div class="subtitulo">Super-resolución ×4 con verificación de lo reconstruido por IA</div>
+    <hr class="filete">
+    <table class="datos">
+      <tr><td>Trabajo:</td><td>Trabajo Final 2 (TP Integrador 2)</td></tr>
+      <tr><td>Autora:</td><td>Dominguez, Micaela Belén</td></tr>
+      <tr><td>Profesor:</td><td>Matías Barreto</td></tr>
+      <tr><td>Versión:</td><td>1.0</td></tr>
+    </table>
+  </div>
+  <div class="pie">Ciudad Autónoma de Buenos Aires, noviembre de 2026</div>
+</section>
+
+<nav class="indice">
+  <h2>Índice</h2>
+  <!--INDICE-->
+</nav>
+
+<h2 class="capitulo">1. Introducción</h2>
+
+<h3>1.1 Propósito</h3>
+<p>Este documento especifica los requisitos del sistema <em>Lámpara UV</em>, una aplicación web local que amplía cuatro veces la resolución de una fotografía mediante un modelo de difusión y acompaña el resultado con evidencia sobre qué partes de la imagen fueron reconstruidas por el modelo. Está dirigido al docente evaluador y a cualquier persona que necesite comprender, verificar o extender el sistema.</p>
+
+<h3>1.2 Alcance</h3>
+<p>El sistema resuelve la sub-tarea A de la consigna: <strong>super-resolución</strong>. Recibe una imagen de baja resolución, la amplía ×4 con el modelo <code>stabilityai/stable-diffusion-x4-upscaler</code> y genera, a partir de la salida, un mapa de diferencias, un mapa de variación entre semillas y un chequeo con tres modelos de visión (CLIP, BLIP y DETR). La imagen descargada lleva una marca visible y metadatos que indican que fue restaurada con IA.</p>
+<p>Quedan fuera del alcance la eliminación de ruido y la restauración de fotos antiguas (sub-tareas B y C), que no forman parte de este MVP; el almacenamiento persistente de trabajos; la autenticación de usuarios y el uso concurrente por varias personas.</p>
+
+<h3>1.3 Definiciones, siglas y abreviaturas</h3>
+<table>
+  <thead><tr><th style="width:24%">Término</th><th>Definición</th></tr></thead>
+  <tbody>
+    <tr><td>Difusión</td><td>Familia de modelos generativos que parten de ruido aleatorio y lo refinan en pasos sucesivos hasta obtener una imagen coherente con una condición (en este caso, la imagen de entrada).</td></tr>
+    <tr><td>Super-resolución</td><td>Aumento de la resolución espacial de una imagen. En este sistema, el factor es ×4 por lado.</td></tr>
+    <tr><td>Semilla</td><td>Número que inicializa el generador de ruido. Con la misma semilla y los mismos parámetros, el resultado es reproducible.</td></tr>
+    <tr><td>Bicúbica</td><td>Interpolación clásica que estima los píxeles nuevos a partir de los vecinos. Se usa como línea base: lo que la bicúbica no explica, lo aportó el modelo.</td></tr>
+    <tr><td>Mapa de diferencias</td><td>Imagen en escala de grises con el error absoluto por píxel entre la salida del modelo y la entrada ampliada por bicúbica.</td></tr>
+    <tr><td>Mapa de variación</td><td>Desvío estándar por píxel entre las salidas obtenidas con distintas semillas.</td></tr>
+    <tr><td>Lámpara UV</td><td>Metáfora de la interfaz: así como la luz ultravioleta revela retoques en una obra restaurada, la herramienta ilumina las zonas reconstruidas por el modelo.</td></tr>
+    <tr><td>VAE</td><td><em>Variational Autoencoder</em>. Componente del modelo que codifica y decodifica imágenes desde y hacia el espacio latente.</td></tr>
+    <tr><td>CLIP</td><td><em>Contrastive Language-Image Pre-training</em>. Modelo que relaciona imágenes con textos; se usa para clasificación sin entrenamiento previo (<em>zero-shot</em>).</td></tr>
+    <tr><td>BLIP</td><td><em>Bootstrapping Language-Image Pre-training</em>. Modelo que genera una descripción textual de una imagen.</td></tr>
+    <tr><td>DETR</td><td><em>DEtection TRansformer</em>. Modelo de detección de objetos.</td></tr>
+    <tr><td>API</td><td>Interfaz de programación de aplicaciones. Aquí, el conjunto de rutas HTTP que expone el servidor.</td></tr>
+    <tr><td>GPU / VRAM</td><td>Unidad de procesamiento gráfico y su memoria dedicada.</td></tr>
+    <tr><td>RF / RNF</td><td>Requisito funcional / requisito no funcional.</td></tr>
+  </tbody>
+</table>
+
+<h3>1.4 Referencias</h3>
+<ul>
+  <li>IEEE Std 830-1998, <em>IEEE Recommended Practice for Software Requirements Specifications</em>.</li>
+  <li>Consigna del Trabajo Práctico Integrador 2, Procesamiento Digital de Imágenes e Introducción a Visión por Computadora, IFTS, 2026.</li>
+  <li>Ficha del modelo <code>stabilityai/stable-diffusion-x4-upscaler</code> en Hugging Face (licencia CreativeML Open RAIL++-M).</li>
+  <li>Fichas de los modelos <code>openai/clip-vit-base-patch32</code>, <code>Salesforce/blip-image-captioning-large</code> y <code>facebook/detr-resnet-50</code> en Hugging Face.</li>
+  <li>Repositorio del proyecto: <code>github.com/dominguezmicaela/iagen</code> (README y código fuente).</li>
+</ul>
+
+<h3>1.5 Visión general del documento</h3>
+<p>La sección 2 describe el producto en términos generales: su contexto, sus funciones, sus usuarios y sus restricciones. La sección 3 detalla los requisitos funcionales, las interfaces externas y los requisitos no funcionales. La sección 4 presenta los casos de uso principales y la sección 5 vincula los requisitos con las pruebas automatizadas que los verifican.</p>
+
+<h2 class="capitulo">2. Descripción general</h2>
+
+<h3>2.1 Perspectiva del producto</h3>
+<p>Lámpara UV es un sistema autónomo que corre íntegramente en la computadora de la persona usuaria. Se compone de un frontend web (React y TypeScript) servido por la misma API (FastAPI), una cola de trabajos de un solo hilo y tres módulos de procesamiento. Los modelos se descargan de Hugging Face la primera vez y luego funcionan sin conexión.</p>
+<table>
+  <thead><tr><th style="width:30%">Componente</th><th>Responsabilidad</th></tr></thead>
+  <tbody>
+    <tr><td>Frontend (<code>frontend/</code>)</td><td>Interfaz de cuatro pantallas: Subir, Restaurar, Revisar y Lámpara UV. Consulta el estado del trabajo cada 0,5 s.</td></tr>
+    <tr><td>API (<code>app/main.py</code>)</td><td>Valida tamaño, formato y parámetros; crea trabajos; sirve imágenes, descargas e informes.</td></tr>
+    <tr><td>Gestor de trabajos (<code>app/trabajos.py</code>)</td><td>Cola de un solo hilo que garantiza que nunca corran dos difusiones a la vez; registra progreso, etapas y tiempos.</td></tr>
+    <tr><td>Restauración (<code>app/pipeline/restaurar.py</code>)</td><td>Prepara la entrada, ejecuta el modelo de difusión con varias semillas y genera fotogramas intermedios.</td></tr>
+    <tr><td>Diferencias (<code>app/pipeline/diferencias.py</code>)</td><td>Calcula los mapas de diferencias y de variación, los porcentajes por umbral y las zonas de mayor cambio.</td></tr>
+    <tr><td>Verificación (<code>app/pipeline/verificar.py</code>)</td><td>Ejecuta CLIP, BLIP y DETR sobre la entrada y la salida, y compara los resultados.</td></tr>
+  </tbody>
+</table>
+<p class="leyenda">Tabla 1. Componentes del sistema.</p>
+
+<h3>2.2 Funciones del producto</h3>
+<ul>
+  <li>Cargar una imagen propia o elegir una de ejemplo.</li>
+  <li>Ajustar los parámetros de la difusión e informar cuánta libertad para inventar implican.</li>
+  <li>Restaurar la imagen ×4 mostrando el progreso real, paso a paso, con fotogramas intermedios.</li>
+  <li>Generar versiones con semillas adicionales para medir la variación.</li>
+  <li>Comparar entrada y salida con un deslizador, una lupa y la vista del original.</li>
+  <li>Revelar con la lámpara UV las zonas que cambiaron, con umbral e intensidad ajustables.</li>
+  <li>Verificar con CLIP, BLIP y DETR si cambió el contenido, la descripción o los objetos.</li>
+  <li>Descargar la imagen con la marca «Restaurada con IA» y un informe JSON con todos los datos del proceso.</li>
+</ul>
+
+<h3>2.3 Características de los usuarios</h3>
+<table>
+  <thead><tr><th style="width:24%">Usuario</th><th>Características</th></tr></thead>
+  <tbody>
+    <tr><td>Persona usuaria final</td><td>Persona de 45 a 55 años que digitaliza el archivo fotográfico familiar. Usa la computadora a diario, pero no tiene conocimientos técnicos sobre IA. Necesita ampliar fotos chicas sin que el programa altere detalles importantes sin avisarle.</td></tr>
+    <tr><td>Docente evaluador</td><td>Conoce los conceptos de procesamiento digital de imágenes. Necesita ejecutar el sistema, revisar sus decisiones y verificar que cumpla la consigna.</td></tr>
+    <tr><td>Desarrollador</td><td>Conoce Python y TypeScript. Necesita instalar el entorno, correr las pruebas y extender el sistema.</td></tr>
+  </tbody>
+</table>
+
+<h3>2.4 Restricciones</h3>
+<ul>
+  <li>Python 3.12 gestionado con <code>uv</code>; PyTorch desde el índice de CUDA 12.8, necesario para GPU de arquitectura Blackwell (sm_120).</li>
+  <li>Solo modelos abiertos que corran en local y no requieran token de acceso.</li>
+  <li>El lado mayor de la entrada se limita a 256 px en GPU (128 px en CPU), en múltiplos de 8 por la estructura latente del VAE.</li>
+  <li>Imágenes de hasta 10 MB.</li>
+  <li>La interfaz y los mensajes deben estar en español, en lenguaje simple y sin jerga técnica.</li>
+  <li>Los avisos de contenido reconstruido por IA y la marca de la descarga no pueden desactivarse.</li>
+</ul>
+
+<h3>2.5 Suposiciones y dependencias</h3>
+<ul>
+  <li>La computadora dispone de una GPU NVIDIA con al menos 8 GB de VRAM para el modo real. Con menos memoria puede usarse la descarga parcial a CPU (<code>RESTAURA_OFFLOAD=1</code>); sin GPU, el sistema funciona pero con tiempos mucho mayores.</li>
+  <li>Hay conexión a internet la primera vez, para descargar los modelos (unos 8 GB).</li>
+  <li>El sistema se usa desde un navegador moderno en la misma computadora (<code>127.0.0.1</code>).</li>
+  <li>Se depende de las bibliotecas diffusers, transformers, PyTorch, FastAPI, Pillow, NumPy y SciPy.</li>
+</ul>
+
+<h2 class="capitulo">3. Requisitos específicos</h2>
+
+<h3>3.1 Requisitos funcionales</h3>
+<p>La prioridad se expresa como <strong>Alta</strong> (imprescindible para cumplir el objetivo), <strong>Media</strong> (mejora significativa) o <strong>Baja</strong> (deseable).</p>
+<table>
+  <thead><tr><th style="width:9%">ID</th><th style="width:22%">Nombre</th><th>Descripción</th><th class="c" style="width:10%">Prioridad</th></tr></thead>
+  <tbody>
+    <tr><td class="id">RF-01</td><td>Carga de imagen</td><td>El sistema debe permitir cargar una imagen PNG, JPG o WEBP de hasta 10 MB, arrastrándola o eligiéndola desde el explorador de archivos.</td><td class="c">Alta</td></tr>
+    <tr><td class="id">RF-02</td><td>Imagen de ejemplo</td><td>El sistema debe ofrecer una imagen de ejemplo para probar la restauración sin archivos propios.</td><td class="c">Media</td></tr>
+    <tr><td class="id">RF-03</td><td>Validación de la entrada</td><td>El sistema debe rechazar archivos que no sean imágenes, que superen 10 MB o que estén dañados, con un mensaje en lenguaje simple que indique qué hacer.</td><td class="c">Alta</td></tr>
+    <tr><td class="id">RF-04</td><td>Ajuste de parámetros</td><td>El sistema debe permitir ajustar el nivel de ruido (0 a 350), los pasos (10 a 100) y el <em>guidance</em> (0 a 15), y rechazar valores fuera de rango.</td><td class="c">Media</td></tr>
+    <tr><td class="id">RF-05</td><td>Indicador de libertad</td><td>El sistema debe traducir los parámetros a un indicador de «libertad para inventar» (poca, media o mucha).</td><td class="c">Baja</td></tr>
+    <tr><td class="id">RF-06</td><td>Preparación de la entrada</td><td>El sistema debe convertir la imagen a RGB y reducirla con Lanczos hasta el lado máximo configurado, en múltiplos de 8, sin ampliar las imágenes ya chicas.</td><td class="c">Alta</td></tr>
+    <tr><td class="id">RF-07</td><td>Super-resolución ×4</td><td>El sistema debe ampliar la imagen cuatro veces con el modelo de difusión, usando la semilla principal (42 por defecto).</td><td class="c">Alta</td></tr>
+    <tr><td class="id">RF-08</td><td>Progreso en tiempo real</td><td>El sistema debe informar el estado (en cola, restaurando, verificando, listo o error), la etapa, el paso actual, la semilla en curso y el tiempo restante estimado.</td><td class="c">Alta</td></tr>
+    <tr><td class="id">RF-09</td><td>Fotogramas intermedios</td><td>El sistema debe decodificar los latentes en los pasos correspondientes al 10, 30, 50, 70 y 90 % de la difusión y mostrarlos como fotogramas.</td><td class="c">Media</td></tr>
+    <tr><td class="id">RF-10</td><td>Semillas extra</td><td>El sistema debe restaurar la imagen con hasta tres semillas adicionales (7, 19 y 33 por defecto en GPU) y permitir ver cada versión.</td><td class="c">Alta</td></tr>
+    <tr><td class="id">RF-11</td><td>Mapa de diferencias</td><td>El sistema debe calcular el error absoluto por píxel entre la salida y la entrada ampliada por bicúbica, suavizarlo con un filtro gaussiano y normalizarlo por el percentil 99,5.</td><td class="c">Alta</td></tr>
+    <tr><td class="id">RF-12</td><td>Mapa de variación</td><td>El sistema debe calcular el desvío estándar por píxel entre las salidas de las distintas semillas.</td><td class="c">Alta</td></tr>
+    <tr><td class="id">RF-13</td><td>Porcentajes y zonas</td><td>El sistema debe informar el porcentaje de la imagen que supera cada umbral (5 % a 95 %, de a 5) y ubicar las cuatro zonas de mayor cambio.</td><td class="c">Media</td></tr>
+    <tr><td class="id">RF-14</td><td>Comparador</td><td>El sistema debe mostrar entrada y salida con un divisor deslizable, una lupa ×2 y la opción de mantener presionado para ver el original.</td><td class="c">Alta</td></tr>
+    <tr><td class="id">RF-15</td><td>Lámpara UV</td><td>El sistema debe superponer el mapa elegido (contra la foto o entre semillas) sobre la salida, con una lámpara arrastrable y controles de umbral e intensidad.</td><td class="c">Alta</td></tr>
+    <tr><td class="id">RF-16</td><td>Verificación con CLIP</td><td>El sistema debe clasificar entrada y salida entre categorías de contenido y calidad, y alertar si cambia la categoría principal.</td><td class="c">Alta</td></tr>
+    <tr><td class="id">RF-17</td><td>Verificación con BLIP</td><td>El sistema debe describir entrada y salida, y resaltar las palabras nuevas de la segunda descripción, sin contar palabras vacías.</td><td class="c">Alta</td></tr>
+    <tr><td class="id">RF-18</td><td>Verificación con DETR</td><td>El sistema debe detectar objetos con confianza mayor a 0,7 en entrada y salida, y alertar si aparecen o desaparecen objetos.</td><td class="c">Media</td></tr>
+    <tr><td class="id">RF-19</td><td>Aviso permanente</td><td>El sistema debe mostrar en la pantalla de resultados un aviso que indique qué detalles no estaban en la entrada y fueron sintetizados por el modelo.</td><td class="c">Alta</td></tr>
+    <tr><td class="id">RF-20</td><td>Descarga marcada</td><td>El sistema debe exportar la imagen con la leyenda visible «Restaurada con IA» y guardar en los metadatos PNG el modelo, la semilla y los parámetros.</td><td class="c">Alta</td></tr>
+    <tr><td class="id">RF-21</td><td>Informe JSON</td><td>El sistema debe exportar un informe con parámetros, medidas, semillas, porcentajes, zonas, verificación, tiempos y dispositivo.</td><td class="c">Media</td></tr>
+    <tr><td class="id">RF-22</td><td>Historial</td><td>El sistema debe listar las restauraciones de la sesión y permitir volver a abrir cualquiera de ellas.</td><td class="c">Baja</td></tr>
+    <tr><td class="id">RF-23</td><td>Modo simulado</td><td>El sistema debe poder ejecutarse sin GPU ni modelos, reemplazando la difusión por Lanczos ×4 con realce y la verificación por datos fijos, e informarlo en la interfaz.</td><td class="c">Media</td></tr>
+  </tbody>
+</table>
+<p class="leyenda">Tabla 2. Requisitos funcionales.</p>
+
+<h3>3.2 Interfaces externas</h3>
+
+<h4>3.2.1 Interfaz de usuario</h4>
+<p>La interfaz es una aplicación web de una sola página, con un encabezado fijo que muestra los cuatro pasos del recorrido (Subir, Restaurar, Revisar y Lámpara UV) y el acceso al historial. Cada pantalla se organiza en un lienzo principal con la imagen, una ficha lateral con información y ajustes, y una barra de herramientas inferior con las acciones. En pantallas angostas, los elementos se apilan en una sola columna. El detalle de uso se describe en el Manual de usuario.</p>
+
+<h4>3.2.2 Interfaz de software (API)</h4>
+<table>
+  <thead><tr><th style="width:10%">Método</th><th style="width:38%">Ruta</th><th>Descripción</th></tr></thead>
+  <tbody>
+    <tr><td>GET</td><td><code>/api/salud</code></td><td>Dispositivo, modo (real o simulado), modelos y semillas extra configuradas.</td></tr>
+    <tr><td>POST</td><td><code>/api/restaurar</code></td><td>Recibe la imagen y los parámetros (formulario multiparte) y devuelve el identificador del trabajo.</td></tr>
+    <tr><td>GET</td><td><code>/api/trabajos/{id}</code></td><td>Estado público del trabajo: estado, etapa, paso, fotogramas y resultado al terminar.</td></tr>
+    <tr><td>GET</td><td><code>/api/trabajos/{id}/imagen/{nombre}</code></td><td>Imagen PNG del trabajo (entrada, salidas, mapas, fotogramas).</td></tr>
+    <tr><td>GET</td><td><code>/api/trabajos/{id}/descarga.png</code></td><td>Imagen final con la marca «Restaurada con IA» y metadatos.</td></tr>
+    <tr><td>GET</td><td><code>/api/trabajos/{id}/informe.json</code></td><td>Informe completo del proceso.</td></tr>
+  </tbody>
+</table>
+<p class="leyenda">Tabla 3. Rutas de la API.</p>
+<p>Los errores se devuelven con códigos HTTP estándar y un mensaje en español: 404 (trabajo o imagen inexistente), 409 (trabajo sin terminar), 413 (imagen de más de 10 MB), 415 (archivo que no es imagen o está dañado) y 422 (parámetros inválidos).</p>
+
+<h4>3.2.3 Interfaz de hardware</h4>
+<p>El modo real utiliza una GPU NVIDIA con CUDA. El sistema se probó con una NVIDIA GeForce RTX 5060 Ti de 16 GB de VRAM, un procesador AMD Ryzen 5 7600X y 32 GB de RAM DDR5, sobre Windows 11 Pro.</p>
+
+<h3>3.3 Requisitos no funcionales</h3>
+<table>
+  <thead><tr><th style="width:10%">ID</th><th style="width:18%">Categoría</th><th>Descripción</th></tr></thead>
+  <tbody>
+    <tr><td class="id">RNF-01</td><td>Rendimiento</td><td>Con GPU y los modelos ya cargados, una restauración con cuatro semillas de 50 pasos debe completarse en alrededor de un minuto. Medición de referencia: 51,6 s de restauración y 0,6 s de verificación para una entrada de 225 × 150 px.</td></tr>
+    <tr><td class="id">RNF-02</td><td>Uso de recursos</td><td>Nunca deben ejecutarse dos difusiones a la vez en la GPU. Los modelos se cargan una sola vez, en el primer uso o al arrancar si se configura la precarga.</td></tr>
+    <tr><td class="id">RNF-03</td><td>Transparencia</td><td>El progreso debe mostrar la etapa real del proceso; no se admiten indicadores de espera sin información.</td></tr>
+    <tr><td class="id">RNF-04</td><td>Honestidad</td><td>Toda salida debe estar acompañada de avisos de contenido reconstruido, y toda descarga debe llevar la marca visible y los metadatos. Estos elementos no son configurables.</td></tr>
+    <tr><td class="id">RNF-05</td><td>Usabilidad</td><td>Textos en español rioplatense, sin jerga técnica; errores redactados en lenguaje simple con una acción sugerida; atajos de teclado para las funciones de revisión.</td></tr>
+    <tr><td class="id">RNF-06</td><td>Accesibilidad</td><td>Controles operables con teclado, foco visible, etiquetas accesibles en los botones de icono y respeto de la preferencia de movimiento reducido del sistema.</td></tr>
+    <tr><td class="id">RNF-07</td><td>Privacidad</td><td>Las imágenes se procesan en la computadora de la persona usuaria y no se envían a servicios externos. Los trabajos se guardan solo en memoria.</td></tr>
+    <tr><td class="id">RNF-08</td><td>Seguridad</td><td>El servidor escucha en <code>127.0.0.1</code>. Se limitan el tamaño de la imagen, la longitud del <em>prompt</em> y la cantidad de semillas extra, y se rechazan imágenes que excedan el límite de descompresión.</td></tr>
+    <tr><td class="id">RNF-09</td><td>Portabilidad</td><td>El sistema debe iniciarse con un solo comando (<code>uv run iniciar.py</code>) y funcionar sin Node.js, gracias al frontend compilado incluido en el repositorio.</td></tr>
+    <tr><td class="id">RNF-10</td><td>Mantenibilidad</td><td>Toda la configuración se centraliza en variables de entorno <code>RESTAURA_*</code>. El código se valida con ruff y oxlint, y cada función del procesamiento tiene pruebas que corren sin GPU.</td></tr>
+    <tr><td class="id">RNF-11</td><td>Reproducibilidad</td><td>Con la misma imagen, semilla y parámetros, el resultado debe ser el mismo; los parámetros quedan registrados en el informe y en los metadatos.</td></tr>
+    <tr><td class="id">RNF-12</td><td>Capacidad</td><td>El sistema conserva en memoria los últimos 10 trabajos; los anteriores se descartan.</td></tr>
+  </tbody>
+</table>
+<p class="leyenda">Tabla 4. Requisitos no funcionales.</p>
+
+<h3>3.4 Restricciones de diseño</h3>
+<ul>
+  <li>Arquitectura cliente-servidor local: FastAPI sirve tanto la API como el frontend compilado.</li>
+  <li>El contrato de la API se define en <code>app/trabajos.py</code> y en <code>frontend/src/api.ts</code>, que deben modificarse en conjunto.</li>
+  <li>El VAE se carga en precisión de 32 bits, porque en 16 bits puede producir imágenes negras; el resto del modelo usa 16 bits en GPU.</li>
+  <li>La navegación entre pantallas usa el fragmento de la URL (<code>#/pantalla</code>), para funcionar en cualquier servidor estático.</li>
+</ul>
+
+<h2 class="capitulo">4. Casos de uso</h2>
+
+<h3>4.1 CU-01: Restaurar una foto</h3>
+<div class="ficha">
+<table>
+  <tr><td>Actor</td><td>Persona usuaria final.</td></tr>
+  <tr><td>Precondición</td><td>La aplicación está en ejecución y abierta en el navegador.</td></tr>
+  <tr><td>Flujo principal</td><td>1. La persona carga una imagen o elige un ejemplo.<br>2. Opcionalmente ajusta el nivel de ruido y los pasos.<br>3. Presiona «Restaurar imagen».<br>4. El sistema valida la imagen, crea el trabajo y muestra la pantalla Restaurar.<br>5. El sistema informa el avance, las etapas y los fotogramas hasta terminar.<br>6. La persona presiona «Revisar resultado».</td></tr>
+  <tr><td>Flujos alternativos</td><td>4a. La imagen supera 10 MB, no es una imagen o está dañada: el sistema muestra el motivo y la persona elige otra.<br>5a. La GPU se queda sin memoria: el sistema sugiere activar la descarga parcial a CPU o usar menos pasos.<br>5b. Se pierde la conexión con el servidor: el sistema indica que hay que volver a iniciarlo.</td></tr>
+  <tr><td>Poscondición</td><td>El trabajo queda en estado «listo» y figura en el historial de la sesión.</td></tr>
+  <tr><td>Requisitos</td><td>RF-01 a RF-13, RF-22.</td></tr>
+</table>
+</div>
+
+<h3>4.2 CU-02: Revisar el resultado</h3>
+<div class="ficha">
+<table>
+  <tr><td>Actor</td><td>Persona usuaria final.</td></tr>
+  <tr><td>Precondición</td><td>Existe un trabajo en estado «listo».</td></tr>
+  <tr><td>Flujo principal</td><td>1. El sistema muestra el aviso de detalle inventado y el comparador.<br>2. La persona desliza el divisor, usa la lupa o mantiene presionado para ver el original.<br>3. La persona compara las versiones de las distintas semillas.<br>4. La persona lee el chequeo de CLIP, BLIP y DETR, que se despliega solo cuando hay alertas.</td></tr>
+  <tr><td>Flujo alternativo</td><td>1a. No hay trabajo terminado: el sistema invita a subir una imagen o a ver el progreso.</td></tr>
+  <tr><td>Requisitos</td><td>RF-10, RF-14, RF-16 a RF-19.</td></tr>
+</table>
+</div>
+
+<h3>4.3 CU-03: Inspeccionar con la lámpara UV</h3>
+<div class="ficha">
+<table>
+  <tr><td>Actor</td><td>Persona usuaria final.</td></tr>
+  <tr><td>Precondición</td><td>Existe un trabajo en estado «listo».</td></tr>
+  <tr><td>Flujo principal</td><td>1. La persona enciende la lámpara UV.<br>2. Arrastra la lámpara sobre la imagen; las zonas que cambiaron se iluminan.<br>3. Ajusta el umbral y observa el porcentaje de imagen iluminada.<br>4. Cambia entre «Contra tu foto» y «Entre semillas».<br>5. Revisa las cuatro zonas de mayor cambio.</td></tr>
+  <tr><td>Requisitos</td><td>RF-11 a RF-13, RF-15.</td></tr>
+</table>
+</div>
+
+<h3>4.4 CU-04: Descargar la imagen y el informe</h3>
+<div class="ficha">
+<table>
+  <tr><td>Actor</td><td>Persona usuaria final.</td></tr>
+  <tr><td>Precondición</td><td>Existe un trabajo en estado «listo».</td></tr>
+  <tr><td>Flujo principal</td><td>1. La persona presiona «Descargar» o «Exportar informe».<br>2. El sistema genera la imagen con la marca y los metadatos, o el informe JSON.<br>3. El navegador guarda el archivo y el sistema confirma la acción.</td></tr>
+  <tr><td>Flujo alternativo</td><td>2a. El trabajo todavía no terminó: el sistema rechaza la descarga.</td></tr>
+  <tr><td>Requisitos</td><td>RF-20, RF-21.</td></tr>
+</table>
+</div>
+
+<h2 class="capitulo">5. Verificación de requisitos</h2>
+<p>El sistema cuenta con 27 pruebas automatizadas de backend (pytest) y 6 de frontend (Vitest). Todas corren sin GPU, en modo simulado o con imágenes sintéticas. La tabla siguiente relaciona los requisitos con las pruebas que los verifican.</p>
+<table>
+  <thead><tr><th style="width:22%">Requisitos</th><th style="width:30%">Archivo de prueba</th><th>Qué se verifica</th></tr></thead>
+  <tbody>
+    <tr><td>RF-01, RF-03, RF-07, RF-08, RF-21</td><td><code>tests/test_api.py</code></td><td>Flujo completo de la API, errores claros, rechazo de imágenes de más de 10 MB y trabajo inexistente.</td></tr>
+    <tr><td>RF-04, RF-06, RF-09, RNF-11</td><td><code>tests/test_restaurar.py</code></td><td>Ampliación ×4 con límite de entrada, sin ampliar entradas chicas; misma semilla, misma salida; progreso y fotogramas; validación de rangos.</td></tr>
+    <tr><td>RF-11, RF-12, RF-13</td><td><code>tests/test_diferencias.py</code></td><td>Imagen idéntica sin cambios; porcentajes decrecientes; variación nula entre salidas iguales; detección de zonas separadas.</td></tr>
+    <tr><td>RF-16, RF-17, RF-18, RF-23</td><td><code>tests/test_verificar.py</code></td><td>Palabras nuevas sin contar palabras vacías; criterio de CLIP; objetos nuevos y perdidos en DETR; el modo simulado no carga modelos.</td></tr>
+    <tr><td>RF-08, RF-22</td><td><code>frontend/src/__tests__/</code></td><td>Cliente de la API y armado de los datos que muestran las pantallas.</td></tr>
+  </tbody>
+</table>
+<p class="leyenda">Tabla 5. Trazabilidad entre requisitos y pruebas.</p>
+
+<h3>5.1 Limitaciones conocidas</h3>
+<ul>
+  <li>El mapa de diferencias mide cambio, no invención: una zona puede cambiar por una mejora legítima de nitidez, y la bicúbica de referencia también es una estimación.</li>
+  <li>CLIP, BLIP y DETR pueden equivocarse; sus resultados son alertas, nunca pruebas. BLIP describe en inglés.</li>
+  <li>Una imagen mayor al lado máximo se reduce antes de restaurarla y pierde detalle real.</li>
+  <li>Ninguna verificación interna confirma que un detalle sea verdadero: para eso hace falta evidencia externa, como el original en papel o una foto de mayor resolución de la misma escena.</li>
+</ul>
+
+</body>
+</html>

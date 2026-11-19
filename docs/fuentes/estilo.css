@@ -1,0 +1,105 @@
+/* Estilo formal para los documentos del TP: Times New Roman 12, justificado, A4. */
+
+@page {
+  size: A4;
+  margin: 2.5cm 2.5cm 2.5cm 3cm;
+  @top-right {
+    /* el texto lo define cada documento */
+    font-family: "Times New Roman", Times, serif;
+    font-size: 9pt;
+    font-style: italic;
+    color: #555;
+  }
+  @bottom-center {
+    content: counter(page);
+    font-family: "Times New Roman", Times, serif;
+    font-size: 10pt;
+    color: #333;
+  }
+}
+@page :first {
+  @top-right { content: none; }
+  @bottom-center { content: none; }
+}
+
+html { -webkit-print-color-adjust: exact; print-color-adjust: exact; }
+
+body {
+  font-family: "Times New Roman", Times, serif;
+  font-size: 12pt;
+  line-height: 1.5;
+  color: #000;
+  background: #fff;
+  text-align: justify;
+  hyphens: auto;
+  margin: 0;
+}
+
+p { margin: 0 0 8pt; orphans: 3; widows: 3; }
+
+/* ---------- Portada ---------- */
+.portada {
+  height: 24.5cm;
+  display: flex;
+  flex-direction: column;
+  text-align: center;
+  break-after: page;
+}
+.portada .institucion { font-size: 12pt; line-height: 1.4; }
+.portada .institucion strong { display: block; font-size: 13pt; }
+.portada .centro { margin: auto 0; }
+.portada .tipo { font-size: 13pt; letter-spacing: 0.08em; text-transform: uppercase; margin-bottom: 14pt; }
+.portada h1 { font-size: 22pt; font-weight: bold; line-height: 1.25; margin: 0 0 10pt; text-align: center; }
+.portada .subtitulo { font-size: 13pt; font-style: italic; }
+.portada .filete { width: 6cm; border: 0; border-top: 0.75pt solid #000; margin: 18pt auto; }
+.portada .datos { font-size: 12pt; line-height: 1.6; margin: 0 auto; border-collapse: collapse; }
+.portada .datos td { padding: 0 6pt; border: 0; text-align: left; }
+.portada .datos td:first-child { text-align: right; font-weight: bold; }
+.portada .pie { font-size: 12pt; }
+
+/* ---------- Índice ---------- */
+.indice { break-after: page; }
+.indice h2 { text-align: center; }
+.indice ol { list-style: none; padding: 0; margin: 0; }
+.indice li { display: flex; align-items: baseline; gap: 4pt; text-align: left; line-height: 1.7; }
+.indice li .t { flex: none; }
+.indice li .relleno { flex: 1; border-bottom: 0.75pt dotted #000; transform: translateY(-3pt); }
+.indice li .n { flex: none; min-width: 14pt; text-align: right; }
+.indice li.n2 { padding-left: 18pt; }
+.indice li.n1 { font-weight: bold; margin-top: 4pt; }
+
+/* ---------- Títulos ---------- */
+h1, h2, h3, h4 { font-family: "Times New Roman", Times, serif; color: #000; text-align: left; break-after: avoid; hyphens: none; }
+h2 { font-size: 14pt; font-weight: bold; margin: 0 0 10pt; text-transform: uppercase; letter-spacing: 0.02em; }
+h2.capitulo { break-before: page; }
+h3 { font-size: 12pt; font-weight: bold; margin: 14pt 0 6pt; }
+h4 { font-size: 12pt; font-weight: bold; font-style: italic; margin: 10pt 0 4pt; }
+
+/* ---------- Listas ---------- */
+ul, ol { margin: 0 0 8pt; padding-left: 22pt; }
+li { margin-bottom: 2pt; }
+
+/* ---------- Tablas ---------- */
+table { width: 100%; border-collapse: collapse; margin: 6pt 0 4pt; font-size: 11pt; line-height: 1.3; text-align: left; hyphens: manual; }
+thead { display: table-header-group; }
+tr { break-inside: avoid; }
+th, td { border: 0.75pt solid #000; padding: 4pt 6pt; vertical-align: top; }
+th { font-weight: bold; background: #ececec; }
+td.c, th.c { text-align: center; }
+td.id { white-space: nowrap; font-weight: bold; }
+.leyenda { font-size: 10.5pt; font-style: italic; text-align: center; margin: 2pt 0 12pt; }
+
+/* ---------- Figuras ---------- */
+figure { margin: 10pt 0 12pt; break-inside: avoid; text-align: center; }
+figure img { width: 100%; border: 0.75pt solid #000; display: block; }
+figcaption { font-size: 10.5pt; font-style: italic; margin-top: 4pt; }
+
+/* ---------- Código y notas ---------- */
+code, pre { font-family: "Courier New", Courier, monospace; font-size: 10.5pt; }
+pre { border: 0.75pt solid #999; padding: 6pt 8pt; margin: 4pt 0 10pt; white-space: pre-wrap; text-align: left; break-inside: avoid; }
+.nota { border-left: 2pt solid #000; padding: 2pt 0 2pt 10pt; margin: 8pt 0 10pt; }
+.nota p:last-child { margin-bottom: 0; }
+.ficha { break-inside: avoid; margin-bottom: 12pt; }
+.ficha table { margin-bottom: 0; }
+.ficha td:first-child { width: 28%; font-weight: bold; background: #f5f5f5; }
+kbd { font-family: "Courier New", Courier, monospace; font-size: 10.5pt; border: 0.75pt solid #000; padding: 0 3pt; }

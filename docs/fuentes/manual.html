@@ -1,0 +1,260 @@
+<!doctype html>
+<html lang="es">
+<head>
+<meta charset="utf-8">
+<title>Manual de usuario — Lámpara UV</title>
+<link rel="stylesheet" href="estilo.css">
+<style>@page { @top-right { content: "Manual de usuario — Lámpara UV"; } } @page :first { @top-right { content: none; } @bottom-center { content: none; } }</style>
+</head>
+<body>
+
+<section class="portada">
+  <div class="institucion">
+    <strong>Instituto de Formación Técnica Superior (IFTS)</strong>
+    Tecnicatura Superior en Ciencia de Datos e Inteligencia Artificial<br>
+    Procesamiento Digital de Imágenes e Introducción a Visión por Computadora
+  </div>
+  <div class="centro">
+    <div class="tipo">Manual de usuario</div>
+    <h1>Lámpara UV:<br>restauración de imágenes con difusión</h1>
+    <div class="subtitulo">Cómo agrandar una foto y ver qué parte inventó la IA</div>
+    <hr class="filete">
+    <table class="datos">
+      <tr><td>Trabajo:</td><td>Trabajo Final 2 (TP Integrador 2)</td></tr>
+      <tr><td>Autora:</td><td>Dominguez, Micaela Belén</td></tr>
+      <tr><td>Profesor:</td><td>Matías Barreto</td></tr>
+      <tr><td>Versión:</td><td>1.0</td></tr>
+    </table>
+  </div>
+  <div class="pie">Ciudad Autónoma de Buenos Aires, noviembre de 2026</div>
+</section>
+
+<nav class="indice">
+  <h2>Índice</h2>
+  <!--INDICE-->
+</nav>
+
+<h2 class="capitulo">1. Introducción</h2>
+
+<h3>1.1 Qué es Lámpara UV</h3>
+<p>Lámpara UV es una aplicación que agranda cuatro veces una foto chica usando un modelo de inteligencia artificial de difusión. A diferencia de las aplicaciones habituales para «mejorar fotos», no entrega solamente una imagen más nítida: también muestra qué partes del resultado no estaban en la foto original y fueron reconstruidas por el modelo.</p>
+<p>El nombre viene de la técnica que usan los restauradores de arte: bajo luz ultravioleta, la pintura original se ve opaca y los retoques brillan. En la aplicación pasa lo mismo: <strong>lo que se ilumina, lo inventó el modelo</strong>.</p>
+
+<h3>1.2 Para quién es</h3>
+<p>Está pensada para personas que digitalizan fotos familiares o personales con un escáner o con el celular, y que quieren agrandarlas para compartirlas sin que el programa cambie detalles importantes sin avisar. No hace falta saber nada técnico sobre inteligencia artificial.</p>
+
+<h3>1.3 Aviso importante</h3>
+<div class="nota">
+  <p><strong>El resultado es una reconstrucción creíble, no una prueba.</strong> La información que se perdió al achicar una foto ya no existe: el modelo la reemplaza por algo que parece verosímil. Un rostro ampliado es <em>una</em> cara posible, no <em>la</em> cara de la persona. Un texto, una matrícula o un número ampliados pueden mostrar caracteres que nunca estuvieron. No use el resultado como evidencia, documento oficial ni para diagnósticos.</p>
+</div>
+
+<h2 class="capitulo">2. Requisitos</h2>
+
+<h3>2.1 Equipo recomendado</h3>
+<table>
+  <thead><tr><th style="width:30%">Elemento</th><th>Requisito</th></tr></thead>
+  <tbody>
+    <tr><td>Placa de video</td><td>NVIDIA con 8 GB de memoria o más. Con menos memoria, el programa funciona activando un modo de ahorro (ver sección 8). Sin placa de video también funciona, pero cada restauración puede tardar muchos minutos.</td></tr>
+    <tr><td>Espacio en disco</td><td>Unos 8 GB libres para los modelos de inteligencia artificial.</td></tr>
+    <tr><td>Internet</td><td>Solo la primera vez, para descargar los modelos. Después funciona sin conexión.</td></tr>
+    <tr><td>Navegador</td><td>Una versión actual de Chrome, Edge o Firefox.</td></tr>
+    <tr><td>Programas</td><td><code>uv</code>, el gestor de Python del proyecto. Se encarga de instalar Python 3.12 y todas las dependencias.</td></tr>
+  </tbody>
+</table>
+<p class="leyenda">Tabla 1. Requisitos del equipo.</p>
+
+<h3>2.2 Formatos de imagen admitidos</h3>
+<p>Se aceptan fotos en formato PNG, JPG o WEBP de hasta 10 MB. Las imágenes con transparencia o en blanco y negro se convierten a color automáticamente. Si la foto es grande, el programa la achica antes de restaurarla (hasta 256 píxeles de lado con placa de video), por lo que conviene usar fotos que ya sean chicas.</p>
+
+<h2 class="capitulo">3. Instalación y puesta en marcha</h2>
+
+<h3>3.1 Instalación</h3>
+<p>Abra una terminal (en Windows, PowerShell) y ejecute los siguientes comandos, uno por vez:</p>
+<pre>git clone https://github.com/dominguezmicaela/iagen.git
+cd iagen
+uv sync</pre>
+<p>El último comando descarga e instala todo lo necesario. Puede tardar varios minutos la primera vez.</p>
+
+<h3>3.2 Iniciar la aplicación</h3>
+<p>Dentro de la carpeta del proyecto, ejecute:</p>
+<pre>uv run iniciar.py</pre>
+<p>El programa se inicia y abre el navegador en la dirección <code>http://127.0.0.1:8000</code>. La primera restauración tarda más de lo habitual porque el programa descarga y carga los modelos. Para cerrar la aplicación, vuelva a la terminal y presione <kbd>Ctrl</kbd> + <kbd>C</kbd>.</p>
+
+<h3>3.3 Modo de prueba sin placa de video</h3>
+<p>Para recorrer la interfaz sin placa de video ni modelos, inicie el programa así:</p>
+<pre>uv run iniciar.py --simulado</pre>
+<p>En este modo, la «restauración» es una ampliación clásica con realce y la verificación devuelve datos fijos. La aplicación lo indica en pantalla.</p>
+
+<h2 class="capitulo">4. La pantalla principal</h2>
+<p>Todas las pantallas comparten la misma organización:</p>
+<ul>
+  <li><strong>Menú superior.</strong> El logo y los cuatro pasos del recorrido: Subir, Restaurar, Revisar y Lámpara UV.</li>
+  <li><strong>Tus restauraciones.</strong> Columna a la izquierda, debajo del menú, con las fotos restauradas en la sesión. Haciendo clic en cualquiera de ellas se vuelve a abrir su resultado; el botón <em>+</em> empieza una restauración nueva.</li>
+  <li><strong>Zona principal.</strong> Muestra la imagen con la que se está trabajando.</li>
+  <li><strong>Panel derecho.</strong> Reúne la información y los ajustes de cada paso.</li>
+  <li><strong>Barra inferior.</strong> Contiene las acciones principales: restaurar, revisar, encender la lámpara, descargar.</li>
+</ul>
+<p>En pantallas chicas, el menú muestra solo los íconos, <em>Tus restauraciones</em> pasa a un botón del menú que despliega la lista, y los paneles se ubican uno debajo del otro.</p>
+
+<h2 class="capitulo">5. Paso a paso</h2>
+
+<h3>5.1 Paso 1: Subir la foto</h3>
+<figure>
+  <img src="../capturas/1-subir.png" alt="Pantalla Subir">
+  <figcaption>Figura 1. Pantalla Subir.</figcaption>
+</figure>
+<ol>
+  <li>Arrastre la foto hasta el recuadro grande o haga clic sobre él para elegirla desde la computadora. También puede usar la foto de ejemplo: en <em>Probá con un ejemplo</em>, presione <strong>Usar este ejemplo</strong>.</li>
+  <li>El panel derecho, <em>Qué va a hacer</em>, resume la tarea: agrandar la foto ×4 (<strong>Poca resolución</strong>) y qué parte va a inventar el modelo.</li>
+  <li>Si lo desea, ajuste los valores en <em>Ajustes</em>:
+    <ul>
+      <li><strong>Nivel de ruido</strong>: cuanto más alto, más libertad tiene el modelo para inventar detalle. El indicador <em>Libertad para inventar</em> de la barra inferior muestra si es poca, media o mucha.</li>
+      <li><strong>Pasos</strong>: cantidad de pasos de la difusión. Más pasos dan un resultado más refinado, pero tardan más.</li>
+    </ul>
+  </li>
+  <li>Presione <strong>Restaurar imagen</strong> en la barra inferior.</li>
+</ol>
+<p>Para cambiar la foto elegida, use el botón con la cruz en la esquina de la imagen.</p>
+
+<h3>5.2 Paso 2: Restaurar</h3>
+<figure>
+  <img src="../capturas/2-restaurar.png" alt="Pantalla Restaurar">
+  <figcaption>Figura 2. Pantalla Restaurar, al finalizar el proceso.</figcaption>
+</figure>
+<p>Mientras el modelo trabaja, la pantalla muestra en todo momento qué está haciendo:</p>
+<ul>
+  <li>La imagen central se va definiendo a medida que avanza la difusión.</li>
+  <li>El panel <em>Qué está haciendo el modelo</em> marca la etapa actual: parte del ruido, define las formas e inventa el detalle fino.</li>
+  <li>La sección <em>Cómo fue apareciendo</em> muestra fotogramas intermedios del proceso.</li>
+  <li>La barra inferior indica el paso actual, el total y el tiempo restante estimado.</li>
+</ul>
+<p>Después de la imagen principal, el programa genera tres versiones más con semillas distintas y luego verifica el resultado. Con la configuración por defecto, todo el proceso lleva alrededor de un minuto en una placa de video como la usada en las pruebas. Al terminar, presione <strong>Revisar resultado</strong>.</p>
+
+<h3>5.3 Paso 3: Revisar el resultado</h3>
+<figure>
+  <img src="../capturas/3-revisar.png" alt="Pantalla Revisar">
+  <figcaption>Figura 3. Pantalla Revisar.</figcaption>
+</figure>
+<p>Arriba aparece un aviso fijo que indica qué detalles no estaban en la foto original. Debajo:</p>
+<ul>
+  <li><strong>Comparador.</strong> Arrastre el divisor central para ver la foto original (izquierda) y la restaurada (derecha). La lupa amplía ×2 la zona donde está el puntero.</li>
+  <li><strong>Ver el original.</strong> Mantenga presionado el botón con el ojo, o la barra espaciadora, para ver la foto original en lugar de la restaurada.</li>
+  <li><strong>Otras semillas.</strong> Haga clic en cada versión para verla. Lo que cambia entre ellas no puede venir de su foto, porque la foto es la misma para todas: lo eligió el modelo.</li>
+  <li><strong>Chequeo.</strong> En el panel derecho, tres modelos comparan la foto original con la restaurada. Si alguno detecta un cambio, el chequeo se abre solo y se marca en color.</li>
+</ul>
+<table>
+  <thead><tr><th style="width:26%">Chequeo</th><th>Qué responde</th></tr></thead>
+  <tbody>
+    <tr><td>Cómo la describe (BLIP)</td><td>Describe ambas fotos en una frase (en inglés) y resalta las palabras nuevas de la segunda descripción. Son detalles para verificar.</td></tr>
+    <tr><td>Qué hay en la foto (CLIP)</td><td>Indica si sigue siendo el mismo tipo de foto (un animal, una persona, un objeto, un paisaje) y si parece de alta o de baja resolución.</td></tr>
+    <tr><td>Qué objetos detecta (DETR)</td><td>Compara los objetos detectados en ambas fotos y avisa si aparecieron o desaparecieron.</td></tr>
+  </tbody>
+</table>
+<p class="leyenda">Tabla 2. Chequeos del resultado.</p>
+<p>Estos modelos también pueden equivocarse: sus resultados son alertas para mirar con atención, nunca una prueba.</p>
+
+<h3>5.4 Paso 4: Lámpara UV</h3>
+<figure>
+  <img src="../capturas/4-lampara.png" alt="Pantalla Lámpara UV">
+  <figcaption>Figura 4. Pantalla Lámpara UV.</figcaption>
+</figure>
+<p>Presione <strong>Encender lámpara UV</strong> en la pantalla Revisar o elija el paso en el menú superior.</p>
+<ol>
+  <li>Arrastre la lámpara sobre la foto: del lado de la lámpara, las zonas que cambiaron se iluminan.</li>
+  <li>Elija qué comparar arriba a la derecha:
+    <ul>
+      <li><strong>Contra tu foto</strong>: ilumina lo que cambió respecto de su foto agrandada de forma clásica.</li>
+      <li><strong>Entre semillas</strong>: ilumina lo que cambia entre las distintas versiones; eso lo eligió el modelo.</li>
+    </ul>
+  </li>
+  <li>En el panel derecho, mueva el <strong>Umbral de cambio</strong>: el título indica qué porcentaje de la imagen supera ese umbral. La <strong>Intensidad del brillo</strong> solo cambia cómo se ve.</li>
+  <li>Abajo, las <strong>zonas que se iluminan</strong> muestran las cuatro áreas de mayor cambio. Al pasar el puntero sobre una, se resalta en la foto.</li>
+  <li>En la barra inferior, <em>Toda la imagen</em> aplica la luz a toda la foto y <em>Zonas</em> muestra u oculta los números.</li>
+</ol>
+
+<h3>5.5 Descargar la imagen y el informe</h3>
+<ul>
+  <li><strong>Descargar</strong> (pantalla Revisar): guarda la foto restaurada con la leyenda visible «Restaurada con IA». El archivo PNG además guarda, en sus datos internos, el modelo, la semilla y los parámetros usados.</li>
+  <li><strong>Exportar informe</strong> (pantalla Lámpara UV) o el botón con la hoja (pantalla Revisar): guarda un archivo JSON con todos los datos del proceso, incluidos los porcentajes, las zonas, el chequeo y los tiempos.</li>
+</ul>
+<p>La marca de la descarga no puede quitarse desde la aplicación: es parte de su propósito, para que la imagen no circule sin su aclaración.</p>
+
+<h2 class="capitulo">6. Atajos de teclado</h2>
+<table>
+  <thead><tr><th style="width:24%">Tecla</th><th style="width:22%">Pantalla</th><th>Acción</th></tr></thead>
+  <tbody>
+    <tr><td><kbd>L</kbd></td><td>Revisar</td><td>Prender o apagar la lupa.</td></tr>
+    <tr><td><kbd>Espacio</kbd> (mantener)</td><td>Revisar</td><td>Ver la foto original mientras se mantiene presionada.</td></tr>
+    <tr><td><kbd>←</kbd> <kbd>→</kbd></td><td>Revisar</td><td>Mover el divisor del comparador.</td></tr>
+    <tr><td><kbd>U</kbd></td><td>Lámpara UV</td><td>Iluminar toda la imagen.</td></tr>
+    <tr><td><kbd>Z</kbd></td><td>Lámpara UV</td><td>Mostrar u ocultar las zonas.</td></tr>
+    <tr><td><kbd>Esc</kbd></td><td>Todas</td><td>Cerrar la lista de restauraciones.</td></tr>
+  </tbody>
+</table>
+<p class="leyenda">Tabla 3. Atajos de teclado.</p>
+
+<h2 class="capitulo">7. Cómo interpretar los resultados</h2>
+<table>
+  <thead><tr><th style="width:50%">Se conserva de su foto</th><th>Lo inventa el modelo</th></tr></thead>
+  <tbody>
+    <tr><td>La composición y el encuadre.</td><td>La textura fina: pelo, piel, tela.</td></tr>
+    <tr><td>Las formas y los contornos grandes.</td><td>Los bordes nítidos.</td></tr>
+    <tr><td>Los colores dominantes.</td><td>Los detalles chicos y, sobre todo, letras, números y patrones pequeños.</td></tr>
+  </tbody>
+</table>
+<p class="leyenda">Tabla 4. Qué es dato y qué es reconstrucción.</p>
+<p>Algunas pautas para leer la información de la aplicación:</p>
+<ul>
+  <li>Una zona iluminada no significa necesariamente un error: puede ser una mejora legítima de nitidez. Significa que <strong>hay que mirarla</strong>.</li>
+  <li>Si una zona se ilumina en el modo <em>Entre semillas</em>, ese detalle no es confiable: el modelo lo resolvió distinto cada vez.</li>
+  <li>Las palabras nuevas que marca BLIP son pistas de lo que el modelo agregó. Por ejemplo, en una prueba con la foto del gato, la entrada se describió como un gato «sentado sobre un teclado» y la salida como un gato «sobre una cama mirando a la cámara».</li>
+  <li>La única forma de confirmar un detalle es con evidencia externa: el original en papel, otra foto de mayor resolución de la misma escena o la propia persona fotografiada.</li>
+</ul>
+
+<h2 class="capitulo">8. Mensajes de error y soluciones</h2>
+<table>
+  <thead><tr><th style="width:42%">Mensaje</th><th>Qué hacer</th></tr></thead>
+  <tbody>
+    <tr><td>«El archivo tiene que ser una imagen (JPG, PNG o WEBP).»</td><td>Elija un archivo de imagen. Si la foto está en otro formato (por ejemplo, HEIC del celular), conviértala antes a JPG.</td></tr>
+    <tr><td>«La imagen pesa más de 10 MB.»</td><td>Use una versión más liviana de la foto o redúzcala con cualquier editor.</td></tr>
+    <tr><td>«No se pudo leer la imagen: puede estar dañada o en un formato no soportado.»</td><td>Abra la foto con otro programa para comprobar que se vea bien y vuelva a guardarla como JPG o PNG.</td></tr>
+    <tr><td>«La GPU se quedó sin memoria. Probá con RESTAURA_OFFLOAD=1 o con menos pasos.»</td><td>Baje la cantidad de pasos, o cierre la aplicación e iníciela con el modo de ahorro de memoria (ver más abajo).</td></tr>
+    <tr><td>«No hay conexión con el servidor.»</td><td>La aplicación se cerró. Vuelva a ejecutar <code>uv run iniciar.py</code> en la terminal.</td></tr>
+    <tr><td>«No existe ese trabajo (puede que se haya borrado de la memoria).»</td><td>La aplicación guarda solo las últimas 10 restauraciones y las borra al cerrarse. Vuelva a restaurar la foto.</td></tr>
+    <tr><td>«Todavía no hay nada para revisar.»</td><td>Suba una foto y restáurela antes de abrir Revisar o Lámpara UV.</td></tr>
+  </tbody>
+</table>
+<p class="leyenda">Tabla 5. Mensajes de error frecuentes.</p>
+<p>Para iniciar la aplicación con el modo de ahorro de memoria en Windows (PowerShell):</p>
+<pre>$env:RESTAURA_OFFLOAD = "1"
+uv run iniciar.py</pre>
+
+<h2 class="capitulo">9. Preguntas frecuentes</h2>
+<h4>¿Mi foto sale de mi computadora?</h4>
+<p>No. Todo el procesamiento ocurre en su equipo. Internet se usa únicamente la primera vez, para descargar los modelos.</p>
+<h4>¿Por qué cada semilla da un resultado distinto?</h4>
+<p>Porque el detalle fino lo genera el modelo a partir de ruido aleatorio, y la semilla define ese ruido. Lo que coincide entre todas las versiones proviene de su foto.</p>
+<h4>¿Puedo usar el resultado como prueba de algo?</h4>
+<p>No. Es una reconstrucción creíble, no un registro verificable.</p>
+<h4>¿Por qué la primera restauración tarda más?</h4>
+<p>Porque el programa carga los modelos en memoria (y, la primera vez, los descarga). Las restauraciones siguientes son más rápidas.</p>
+<h4>¿Se guardan mis restauraciones?</h4>
+<p>Solo mientras la aplicación está abierta, y hasta un máximo de 10. Para conservar un resultado, descárguelo.</p>
+
+<h2 class="capitulo">10. Glosario</h2>
+<table>
+  <thead><tr><th style="width:26%">Término</th><th>Significado</th></tr></thead>
+  <tbody>
+    <tr><td>Difusión</td><td>Tipo de modelo de inteligencia artificial que parte de ruido y lo va refinando, paso a paso, hasta formar una imagen.</td></tr>
+    <tr><td>Semilla</td><td>Número que define el punto de partida aleatorio del modelo. Con la misma semilla y los mismos ajustes, el resultado se repite.</td></tr>
+    <tr><td>Nivel de ruido</td><td>Cuánto ruido se agrega a la foto antes de restaurarla. Más ruido da más libertad al modelo para inventar.</td></tr>
+    <tr><td>Pasos</td><td>Cantidad de refinamientos que hace el modelo. Más pasos llevan más tiempo.</td></tr>
+    <tr><td>Bicúbica</td><td>Forma clásica de agrandar una imagen calculando cada píxel nuevo a partir de sus vecinos. Sirve de referencia: lo que no explica, lo aportó el modelo.</td></tr>
+    <tr><td>Umbral</td><td>Valor de cambio a partir del cual una zona se considera modificada y se ilumina.</td></tr>
+    <tr><td>GPU</td><td>Placa de video. Acelera mucho el trabajo de los modelos de inteligencia artificial.</td></tr>
+  </tbody>
+</table>
+<p class="leyenda">Tabla 6. Glosario.</p>
+
+</body>
+</html>
